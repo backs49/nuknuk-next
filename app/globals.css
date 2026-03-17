@@ -2,26 +2,81 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* 넉넉 디저트 글로벌 스타일 */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  body {
+    @apply bg-cream-100 text-charcoal-300 font-body;
+  }
+
+  ::selection {
+    @apply bg-sage-200/40 text-charcoal-400;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* CTA 버튼 공통 스타일 */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2
+           px-8 py-4 rounded-full
+           bg-sage-400 text-white font-semibold
+           hover:bg-sage-500 active:scale-95
+           transition-all duration-300 ease-out
+           shadow-lg shadow-sage-400/20
+           hover:shadow-xl hover:shadow-sage-400/30;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2
+           px-8 py-4 rounded-full
+           bg-white/80 backdrop-blur text-charcoal-300 font-semibold
+           border border-warm-200
+           hover:bg-white hover:border-warm-300 active:scale-95
+           transition-all duration-300 ease-out
+           shadow-md hover:shadow-lg;
+  }
+
+  /* 섹션 공통 패딩 */
+  .section-padding {
+    @apply px-5 md:px-8 lg:px-16 py-16 md:py-24 lg:py-32;
+  }
+
+  /* 카드 호버 효과 */
+  .card-hover {
+    @apply transition-all duration-500 ease-out
+           hover:shadow-2xl hover:shadow-warm-200/30
+           hover:-translate-y-1;
+  }
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+/* 스크롤바 스타일링 */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-cream-200;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-warm-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-warm-400;
+}
+
+/* 네이버 지도 임베드 반응형 */
+.map-container {
+  @apply relative w-full overflow-hidden rounded-2xl shadow-xl;
+  padding-bottom: 56.25%;
+}
+
+.map-container iframe {
+  @apply absolute inset-0 w-full h-full border-0;
 }
