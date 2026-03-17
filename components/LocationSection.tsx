@@ -35,13 +35,22 @@ export default function LocationSection() {
               3. next.config.mjs에 kakao SDK 스크립트 추가
               4. KakaoMap 컴포넌트를 별도로 만들어 사용
             */}
-            <div className="map-container">
+            {/*
+              네이버 지도 임베드 방법:
+              1. map.naver.com 에서 "경북 영천시 서문길 90" 검색
+              2. 좌측 패널 하단 "공유" 버튼 클릭
+              3. "지도 퍼가기" 탭 선택
+              4. 생성된 iframe의 src URL을 아래에 붙여넣기
+              ※ map.naver.com/p/... URL은 iframe 차단됨 — 반드시 "퍼가기" 전용 URL 사용
+            */}
+            <div className="relative w-full overflow-hidden rounded-2xl shadow-xl bg-cream-200" style={{ paddingBottom: "75%" }}>
               <iframe
-                src="https://map.naver.com/p/entry/address/14275652.5282018,4293917.3684643,%EA%B2%BD%EB%B6%81%20%EC%98%81%EC%B2%9C%EC%8B%9C%20%EC%84%9C%EB%AC%B8%EA%B8%B8%2090?c=15.00,0,0,0,dh"
+                src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=%EA%B2%BD%EB%B6%81+%EC%98%81%EC%B2%9C%EC%8B%9C+%EC%84%9C%EB%AC%B8%EA%B8%B8+90&zoom=16&language=ko"
+                className="absolute inset-0 w-full h-full border-0"
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="넉넉 디저트 위치 - 네이버 지도"
+                title="넉넉 디저트 위치"
               />
             </div>
             {/* 지도 앱 바로가기 버튼 */}
