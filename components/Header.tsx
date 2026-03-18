@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useReservation } from "@/components/ReservationProvider";
 
 const navLinks = [
   { href: "#menu", label: "메뉴" },
@@ -14,6 +15,7 @@ const navLinks = [
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { openReservation } = useReservation();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -61,14 +63,12 @@ export default function Header() {
                 {link.label}
               </a>
             ))}
-            <a
-              href="https://www.instagram.com/nuknuk_dessert/"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={openReservation}
               className="btn-primary text-sm !px-6 !py-2.5"
             >
               예약하기
-            </a>
+            </button>
           </nav>
 
           {/* 모바일 햄버거 버튼 */}
@@ -116,18 +116,18 @@ export default function Header() {
                 {link.label}
               </motion.a>
             ))}
-            <motion.a
-              href="https://www.instagram.com/nuknuk_dessert/"
-              target="_blank"
-              rel="noopener noreferrer"
+            <motion.button
               className="btn-primary mt-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              onClick={() => setMobileOpen(false)}
+              onClick={() => {
+                setMobileOpen(false);
+                openReservation();
+              }}
             >
               예약하기
-            </motion.a>
+            </motion.button>
           </motion.div>
         )}
       </AnimatePresence>

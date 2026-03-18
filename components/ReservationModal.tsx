@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import { menuItems, formatPrice } from "@/data/menu";
 
 /**
@@ -230,19 +231,35 @@ export default function ReservationModal({
                 </section>
               )}
 
-              {/* ───── 대체 예약 방법 ───── */}
+              {/* ───── 예약 및 결제 방법 ───── */}
               <section>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="h-px flex-1 bg-warm-100" />
                   <span className="text-xs text-charcoal-100 whitespace-nowrap">
-                    {hasCalendly
-                      ? "또는 다른 방법으로 예약"
-                      : "예약 방법"}
+                    예약 및 결제
                   </span>
                   <div className="h-px flex-1 bg-warm-100" />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* 토스페이먼츠 선결제 */}
+                  <Link
+                    href="/checkout"
+                    onClick={onClose}
+                    className="flex items-center gap-3 p-4 rounded-2xl bg-[#0064FF]/5 border border-[#0064FF]/20 hover:border-[#0064FF]/50 hover:shadow-md transition-all group sm:col-span-2"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-[#0064FF] flex items-center justify-center text-white text-xl font-bold flex-shrink-0 shadow-sm shadow-[#0064FF]/30 group-hover:scale-105 transition-transform">
+                      T
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-[#0064FF] text-sm group-hover:text-[#0050cc] transition-colors">
+                        [강력 추천] 예약 선결제 (토스페이먼츠)
+                      </p>
+                      <p className="text-xs text-charcoal-300 mt-1">
+                        위젯을 통해 카드, 간편결제로 예약금을 결제하고 즉시 예약을 확정합니다
+                      </p>
+                    </div>
+                  </Link>
                   {/* Instagram DM 예약 */}
                   <a
                     href={INSTAGRAM_DM_URL}
