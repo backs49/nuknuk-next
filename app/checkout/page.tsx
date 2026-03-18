@@ -68,13 +68,14 @@ export default function CheckoutPage() {
         failUrl: `${window.location.origin}/checkout/fail`,
       });
       // 성공/실패 시 토스 측에서 자동으로 successUrl / failUrl 로 리다이렉트합니다.
-    } catch (error: any) {
+    } catch (error) {
       console.error(error);
       setIsRequesting(false);
-      if (error.code === "USER_CANCEL") {
+      const tossError = error as { code?: string; message?: string };
+      if (tossError.code === "USER_CANCEL") {
         setErrorMessage("결제를 취소하셨습니다.");
       } else {
-        setErrorMessage(error.message || "결제 요청 중 알 수 없는 오류가 발생했습니다.");
+        setErrorMessage(tossError.message || "결제 요청 중 알 수 없는 오류가 발생했습니다.");
       }
     }
   };

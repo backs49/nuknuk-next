@@ -49,7 +49,7 @@ function SuccessContent() {
     }
 
     confirmPayment();
-  }, [paymentKey, orderId, amount]);
+  }, [paymentKey, orderId, amount, router]);
 
   if (status === "loading") {
     return (
