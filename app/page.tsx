@@ -7,14 +7,22 @@ import InstagramFeed from "@/components/InstagramFeed";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import ReservationProvider from "@/components/ReservationProvider";
+import { getMenuItems, getCategories } from "@/lib/menu-db";
 
-export default function Home() {
+export const revalidate = 60; // 60초마다 메뉴 데이터 재검증
+
+export default async function Home() {
+  const [menuItems, categoryList] = await Promise.all([
+    getMenuItems(),
+    getCategories(),
+  ]);
+
   return (
     <ReservationProvider>
       <Header />
       <main>
         <HeroSection />
-        <MenuSection />
+        <MenuSection items={menuItems} categories={categoryList} />
         <AboutSection />
         <LocationSection />
         <InstagramFeed />

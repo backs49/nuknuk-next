@@ -4,12 +4,22 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import FadeIn from "./FadeIn";
 import MenuCard from "./MenuCard";
-import { categories, menuItems, type MenuCategory } from "@/data/menu";
+import {
+  categories as staticCategories,
+  menuItems as staticMenuItems,
+  type MenuItem,
+  type CategoryInfo,
+} from "@/data/menu";
 
-export default function MenuSection() {
-  const [activeCategory, setActiveCategory] = useState<MenuCategory | "all">(
-    "all"
-  );
+interface MenuSectionProps {
+  items?: MenuItem[];
+  categories?: CategoryInfo[];
+}
+
+export default function MenuSection({ items, categories: categoriesProp }: MenuSectionProps) {
+  const menuItems = items && items.length > 0 ? items : staticMenuItems;
+  const categories = categoriesProp && categoriesProp.length > 0 ? categoriesProp : staticCategories;
+  const [activeCategory, setActiveCategory] = useState<string>("all");
 
   const filteredItems =
     activeCategory === "all"

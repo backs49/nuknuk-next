@@ -33,7 +33,7 @@ export interface MenuItem {
 export type MenuCategory = "rice-cake" | "cake" | "cookie" | "beverage";
 
 export interface CategoryInfo {
-  id: MenuCategory;
+  id: string;
   name: string;
   nameEn: string;
   emoji: string;
