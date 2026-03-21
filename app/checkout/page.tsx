@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { loadPaymentWidget, PaymentWidgetInstance } from "@tosspayments/payment-widget-sdk";
 
-// 토스페이먼츠 공식 테스트 키
-const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
+const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || "";
 
 export default function CheckoutPage() {
   const paymentWidgetRef = useRef<PaymentWidgetInstance | null>(null);

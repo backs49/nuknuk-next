@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
-
-// 토스페이먼츠 공식 테스트 시크릿 키
-const secretKey = "test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6";
+import { getTossAuthHeader, TOSS_CONFIRM_URL } from "@/lib/toss";
 
 // 디스코드 푸시 알림 함수
 async function sendDiscordNotification(orderName: string, amount: number) {
@@ -66,10 +64,10 @@ export async function POST(req: Request) {
     const { paymentKey, orderId, amount } = await req.json();
 
     // 토스페이먼츠 승인 API 호출
-    const response = await fetch("https://api.tosspayments.com/v1/payments/confirm", {
+    const response = await fetch(TOSS_CONFIRM_URL, {
       method: "POST",
       headers: {
-        Authorization: `Basic ${Buffer.from(`${secretKey}:`).toString("base64")}`,
+        Authorization: getTossAuthHeader(),
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
