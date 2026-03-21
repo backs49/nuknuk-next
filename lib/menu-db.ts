@@ -14,16 +14,20 @@ export interface DbCategory {
   name_en: string | null;
   emoji: string;
   sort_order: number;
+  available_delivery_methods: string[];
+  default_shipping_fee: number;
   created_at: string;
   updated_at: string;
 }
 
-function toCategory(db: DbCategory): CategoryInfo {
+function toCategory(dbCat: DbCategory): CategoryInfo {
   return {
-    id: db.id as CategoryInfo["id"],
-    name: db.name,
-    nameEn: db.name_en ?? "",
-    emoji: db.emoji ?? "",
+    id: dbCat.id as CategoryInfo["id"],
+    name: dbCat.name,
+    nameEn: dbCat.name_en ?? "",
+    emoji: dbCat.emoji ?? "",
+    availableDeliveryMethods: dbCat.available_delivery_methods || ["pickup"],
+    defaultShippingFee: dbCat.default_shipping_fee || 0,
   };
 }
 

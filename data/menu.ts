@@ -37,14 +37,16 @@ export interface CategoryInfo {
   name: string;
   nameEn: string;
   emoji: string;
+  availableDeliveryMethods: string[];
+  defaultShippingFee: number;
 }
 
 // 카테고리 정보
 export const categories: CategoryInfo[] = [
-  { id: "rice-cake", name: "떡", nameEn: "Rice Cake", emoji: "🍡" },
-  { id: "cake", name: "케이크", nameEn: "Cake", emoji: "🎂" },
-  { id: "cookie", name: "쿠키·구움과자", nameEn: "Cookies", emoji: "🍪" },
-  { id: "beverage", name: "음료", nameEn: "Beverage", emoji: "🍵" },
+  { id: "rice-cake", name: "떡", nameEn: "Rice Cake", emoji: "🍡", availableDeliveryMethods: ["pickup"], defaultShippingFee: 0 },
+  { id: "cake", name: "케이크", nameEn: "Cake", emoji: "🎂", availableDeliveryMethods: ["pickup"], defaultShippingFee: 0 },
+  { id: "cookie", name: "쿠키·구움과자", nameEn: "Cookies", emoji: "🍪", availableDeliveryMethods: ["pickup", "shipping"], defaultShippingFee: 4000 },
+  { id: "beverage", name: "음료", nameEn: "Beverage", emoji: "🍵", availableDeliveryMethods: ["pickup", "shipping"], defaultShippingFee: 4000 },
 ];
 
 // 알레르기 아이콘 매핑
