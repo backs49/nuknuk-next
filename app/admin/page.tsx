@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import DashboardSummaryCards from "@/components/admin/DashboardSummaryCards";
+import DateRangeFilter from "@/components/admin/DateRangeFilter";
+import SalesChart from "@/components/admin/SalesChart";
+import SalesBreakdownTable from "@/components/admin/SalesBreakdownTable";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface DashboardStats {
   totalMenuItems: number;
@@ -10,7 +16,45 @@ interface DashboardStats {
   withoutImages: number;
 }
 
+interface SummaryData {
+  today: { total: number; count: number; change: number };
+  thisWeek: { total: number; count: number; change: number };
+  thisMonth: { total: number; count: number; change: number };
+  orders: { total: number; count: number; change: number };
+}
+
+interface SalesDataPoint {
+  date?: string;
+  month?: string;
+  total: number;
+  count: number;
+}
+
+interface BreakdownDataPoint {
+  name: string;
+  total: number;
+  count: number;
+  percentage: number;
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function toDateString(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+function getLastYearStart(referenceDate: Date): string {
+  const d = new Date(referenceDate);
+  d.setFullYear(d.getFullYear() - 1);
+  d.setDate(1);
+  d.setMonth(d.getMonth() + 1); // start from a year ago this month
+  return toDateString(d);
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function AdminDashboardPage() {
+  // ── Existing menu stats ──────────────────────────────────────────────────
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [categoryLabels, setCategoryLabels] = useState<Record<string, string>>(
@@ -18,7 +62,6 @@ export default function AdminDashboardPage() {
   );
 
   useEffect(() => {
-    // 카테고리 라벨과 메뉴 데이터를 병렬로 조회
     Promise.all([
       fetch("/api/admin/categories")
         .then((res) => res.json())
@@ -62,10 +105,101 @@ export default function AdminDashboardPage() {
     ]).finally(() => setLoading(false));
   }, []);
 
+  // ── Sales dashboard ───────────────────────────────────────────────────────
+  const today = toDateString(new Date());
+  const thirtyDaysAgo = toDateString(
+    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+  );
+
+  const [dateRange, setDateRange] = useState({ from: thirtyDaysAgo, to: today });
+
+  const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
+  const [dailyData, setDailyData] = useState<SalesDataPoint[]>([]);
+  const [monthlyData, setMonthlyData] = useState<SalesDataPoint[]>([]);
+  const [categoryBreakdown, setCategoryBreakdown] = useState<BreakdownDataPoint[]>([]);
+  const [productBreakdown, setProductBreakdown] = useState<BreakdownDataPoint[]>([]);
+  const [channelBreakdown, setChannelBreakdown] = useState<BreakdownDataPoint[]>([]);
+
+  // Fetch summary once on mount
+  useEffect(() => {
+    fetch("/api/admin/dashboard/summary")
+      .then((res) => res.json())
+      .then((data: SummaryData) => setSummaryData(data))
+      .catch(() => {});
+  }, []);
+
+  // Fetch sales/breakdown data when date range changes
+  useEffect(() => {
+    const { from, to } = dateRange;
+    const lastYearStart = getLastYearStart(new Date(to));
+    const params = new URLSearchParams({ from, to });
+    const monthlyParams = new URLSearchParams({
+      from: lastYearStart,
+      to,
+      granularity: "monthly",
+    });
+
+    Promise.all([
+      fetch(`/api/admin/dashboard/sales?${params}&granularity=daily`)
+        .then((r) => r.json())
+        .then((d: { data: SalesDataPoint[] }) => setDailyData(d.data ?? []))
+        .catch(() => setDailyData([])),
+
+      fetch(`/api/admin/dashboard/sales?${monthlyParams}`)
+        .then((r) => r.json())
+        .then((d: { data: SalesDataPoint[] }) => setMonthlyData(d.data ?? []))
+        .catch(() => setMonthlyData([])),
+
+      fetch(`/api/admin/dashboard/breakdown?type=category&${params}`)
+        .then((r) => r.json())
+        .then((d: { data: BreakdownDataPoint[] }) => setCategoryBreakdown(d.data ?? []))
+        .catch(() => setCategoryBreakdown([])),
+
+      fetch(`/api/admin/dashboard/breakdown?type=product&${params}`)
+        .then((r) => r.json())
+        .then((d: { data: BreakdownDataPoint[] }) => setProductBreakdown(d.data ?? []))
+        .catch(() => setProductBreakdown([])),
+
+      fetch(`/api/admin/dashboard/breakdown?type=channel&${params}`)
+        .then((r) => r.json())
+        .then((d: { data: BreakdownDataPoint[] }) => setChannelBreakdown(d.data ?? []))
+        .catch(() => setChannelBreakdown([])),
+    ]);
+  }, [dateRange]);
+
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div>
       <h1 className="text-2xl font-bold text-charcoal-400 mb-8">대시보드</h1>
 
+      {/* ── 매출 대시보드 ── */}
+      <section className="mb-10 space-y-6">
+        <h2 className="text-xl font-semibold text-charcoal-400">매출 대시보드</h2>
+
+        {/* 요약 카드 */}
+        <DashboardSummaryCards data={summaryData} />
+
+        {/* 기간 필터 */}
+        <DateRangeFilter value={dateRange} onChange={setDateRange} />
+
+        {/* 매출 차트 */}
+        <SalesChart
+          dailyData={dailyData}
+          monthlyData={monthlyData}
+          categoryBreakdown={categoryBreakdown}
+        />
+
+        {/* 매출 분석 테이블 */}
+        <SalesBreakdownTable
+          productData={productBreakdown}
+          channelData={channelBreakdown}
+        />
+      </section>
+
+      {/* ── 구분선 ── */}
+      <hr className="border-gray-200 mb-10" />
+
+      {/* ── 메뉴 통계 (기존) ── */}
       {loading ? (
         <p className="text-charcoal-200">데이터 로딩 중...</p>
       ) : stats ? (
@@ -152,6 +286,8 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StatCard({
   label,
