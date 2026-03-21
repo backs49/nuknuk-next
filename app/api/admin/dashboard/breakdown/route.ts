@@ -157,13 +157,13 @@ export async function GET(request: NextRequest) {
       const items = itemsData || [];
 
       // Get unique menu_item_ids (excluding null)
-      const menuItemIds = [
-        ...new Set(
+      const menuItemIds = Array.from(
+        new Set(
           items
             .map((i: { menu_item_id: string | null }) => i.menu_item_id)
             .filter(Boolean) as string[]
-        ),
-      ];
+        )
+      );
 
       // Fetch menu items to get categories
       const menuItemCategoryMap = new Map<string, string>();

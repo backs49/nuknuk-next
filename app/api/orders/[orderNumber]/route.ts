@@ -30,6 +30,7 @@ export async function GET(
     }
 
     // 민감 정보 제외 (adminMemo, paymentKey)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { adminMemo, paymentKey, ...publicOrder } = order;
     return NextResponse.json({ order: publicOrder });
   } catch (error) {

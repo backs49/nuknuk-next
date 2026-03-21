@@ -122,26 +122,14 @@ function PieTooltip({
   );
 }
 
-function renderCustomLabel({
-  cx,
-  cy,
-  midAngle,
-  innerRadius,
-  outerRadius,
-  percentage,
-}: {
-  cx: number;
-  cy: number;
-  midAngle: number;
-  innerRadius: number;
-  outerRadius: number;
-  percentage: number;
-}) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function renderCustomLabel(props: any) {
+  const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
   const RADIAN = Math.PI / 180;
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
-  if (percentage < 5) return null;
+  if (!percent || percent < 0.05) return null;
   return (
     <text
       x={x}
@@ -152,7 +140,7 @@ function renderCustomLabel({
       fontSize={12}
       fontWeight={600}
     >
-      {`${(percentage * 100).toFixed(0)}%`}
+      {`${(percent * 100).toFixed(0)}%`}
     </text>
   );
 }

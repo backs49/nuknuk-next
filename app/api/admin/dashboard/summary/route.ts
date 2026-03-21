@@ -27,7 +27,7 @@ export async function GET() {
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
     // Helper to get sales sum and count for a period
-    async function getSales(from: Date, to: Date) {
+    const getSales = async (from: Date, to: Date) => {
       const { data } = await supabase!
         .from("orders")
         .select("total_amount")
@@ -40,7 +40,7 @@ export async function GET() {
         0
       );
       return { total, count: (data || []).length };
-    }
+    };
 
     const [
       todaySales,
@@ -58,10 +58,10 @@ export async function GET() {
       getSales(lastMonthStart, thisMonthStart),
     ]);
 
-    function calcChange(current: number, previous: number) {
+    const calcChange = (current: number, previous: number) => {
       if (previous === 0) return current > 0 ? 100 : 0;
       return Math.round(((current - previous) / previous) * 100);
-    }
+    };
 
     return NextResponse.json({
       today: {

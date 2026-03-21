@@ -23,9 +23,14 @@ interface SummaryData {
   orders: { total: number; count: number; change: number };
 }
 
-interface SalesDataPoint {
-  date?: string;
-  month?: string;
+interface DailyDataPoint {
+  date: string;
+  total: number;
+  count: number;
+}
+
+interface MonthlyDataPoint {
+  month: string;
   total: number;
   count: number;
 }
@@ -114,8 +119,8 @@ export default function AdminDashboardPage() {
   const [dateRange, setDateRange] = useState({ from: thirtyDaysAgo, to: today });
 
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
-  const [dailyData, setDailyData] = useState<SalesDataPoint[]>([]);
-  const [monthlyData, setMonthlyData] = useState<SalesDataPoint[]>([]);
+  const [dailyData, setDailyData] = useState<DailyDataPoint[]>([]);
+  const [monthlyData, setMonthlyData] = useState<MonthlyDataPoint[]>([]);
   const [categoryBreakdown, setCategoryBreakdown] = useState<BreakdownDataPoint[]>([]);
   const [productBreakdown, setProductBreakdown] = useState<BreakdownDataPoint[]>([]);
   const [channelBreakdown, setChannelBreakdown] = useState<BreakdownDataPoint[]>([]);
@@ -142,12 +147,12 @@ export default function AdminDashboardPage() {
     Promise.all([
       fetch(`/api/admin/dashboard/sales?${params}&granularity=daily`)
         .then((r) => r.json())
-        .then((d: { data: SalesDataPoint[] }) => setDailyData(d.data ?? []))
+        .then((d: { data: DailyDataPoint[] }) => setDailyData(d.data ?? []))
         .catch(() => setDailyData([])),
 
       fetch(`/api/admin/dashboard/sales?${monthlyParams}`)
         .then((r) => r.json())
-        .then((d: { data: SalesDataPoint[] }) => setMonthlyData(d.data ?? []))
+        .then((d: { data: MonthlyDataPoint[] }) => setMonthlyData(d.data ?? []))
         .catch(() => setMonthlyData([])),
 
       fetch(`/api/admin/dashboard/breakdown?type=category&${params}`)
@@ -177,16 +182,20 @@ export default function AdminDashboardPage() {
         <h2 className="text-xl font-semibold text-charcoal-400">매출 대시보드</h2>
 
         {/* 요약 카드 */}
-        <DashboardSummaryCards data={summaryData} />
+        {summaryData && <DashboardSummaryCards data={summaryData} />}
 
         {/* 기간 필터 */}
-        <DateRangeFilter value={dateRange} onChange={setDateRange} />
+        <DateRangeFilter
+          from={dateRange.from}
+          to={dateRange.to}
+          onChange={(from, to) => setDateRange({ from, to })}
+        />
 
         {/* 매출 차트 */}
         <SalesChart
           dailyData={dailyData}
           monthlyData={monthlyData}
-          categoryBreakdown={categoryBreakdown}
+          categoryData={categoryBreakdown}
         />
 
         {/* 매출 분석 테이블 */}
