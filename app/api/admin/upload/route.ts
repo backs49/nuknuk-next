@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { uploadMenuImage } from "@/lib/menu-db";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 // POST /api/admin/upload — 이미지 업로드
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "파일 크기는 5MB 이하만 가능합니다" },
+        { error: "파일 크기는 10MB 이하만 가능합니다" },
         { status: 400 }
       );
     }

@@ -298,7 +298,7 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
               {uploading ? "업로드 중..." : "파일 선택"}
             </button>
             <p className="text-xs text-charcoal-100 mt-2">
-              JPG, PNG, WebP / 최대 5MB
+              JPG, PNG, WebP / 최대 10MB
             </p>
             {form.image && (
               <button
@@ -321,11 +321,10 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
               key={allergen.value}
               type="button"
               onClick={() => toggleAllergen(allergen.value)}
-              className={`px-4 py-2 text-sm rounded-lg border transition ${
-                form.allergens.includes(allergen.value)
+              className={`px-4 py-2 text-sm rounded-lg border transition ${form.allergens.includes(allergen.value)
                   ? "bg-sage-400 text-white border-sage-400"
                   : "bg-white text-charcoal-300 border-gray-200 hover:border-sage-300"
-              }`}
+                }`}
             >
               {allergen.label}
             </button>
@@ -374,8 +373,8 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
           {saving
             ? "저장 중..."
             : mode === "create"
-            ? "메뉴 추가"
-            : "변경사항 저장"}
+              ? "메뉴 추가"
+              : "변경사항 저장"}
         </button>
         <button
           type="button"
