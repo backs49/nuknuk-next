@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { getTossAuthHeader, TOSS_CONFIRM_URL } from "@/lib/toss";
+import { getOrderByNumber, updateOrderPayment } from "@/lib/order-db";
 
 // 디스코드 푸시 알림 함수
 async function sendDiscordNotification(orderName: string, amount: number) {
@@ -63,6 +64,18 @@ export async function POST(req: Request) {
   try {
     const { paymentKey, orderId, amount } = await req.json();
 
+    // orderId is actually the order_number (NUK-YYYYMMDD-NNN format)
+    const order = await getOrderByNumber(orderId);
+    if (order) {
+      // 주문이 DB에 있으면 금액 검증
+      if (order.totalAmount !== Number(amount)) {
+        return NextResponse.json(
+          { error: "결제 금액이 주문 금액과 일치하지 않습니다" },
+          { status: 400 }
+        );
+      }
+    }
+
     // 토스페이먼츠 승인 API 호출
     const response = await fetch(TOSS_CONFIRM_URL, {
       method: "POST",
@@ -86,6 +99,15 @@ export async function POST(req: Request) {
     }
 
     const data = await response.json();
+
+    // 주문 결제 정보 업데이트
+    if (order) {
+      try {
+        await updateOrderPayment(order.id, paymentKey, data.method || "");
+      } catch (e) {
+        console.error("주문 결제 정보 업데이트 실패:", e);
+      }
+    }
 
     // 알림 비동기 발송 (await 생략하여 결제 응답 속도 최적화)
     const orderName = data?.orderName || "알 수 없는 주문";
