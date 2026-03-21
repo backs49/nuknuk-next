@@ -50,6 +50,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { href: "/admin", label: "대시보드", icon: "📊" },
+    { href: "/admin/orders", label: "주문 관리", icon: "🧾" },
     { href: "/admin/menu", label: "메뉴 관리", icon: "🍡" },
     { href: "/admin/categories", label: "카테고리 관리", icon: "📂" },
   ];

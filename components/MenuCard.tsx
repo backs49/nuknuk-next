@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   type MenuItem,
@@ -156,6 +157,13 @@ export default function MenuCard({ item, index }: MenuCardProps) {
             ))}
           </div>
         )}
+
+        <Link
+          href={`/order/${item.id}`}
+          className="mt-4 block w-full text-center py-2.5 bg-sage-400 text-white rounded-lg text-sm font-medium hover:bg-sage-500 transition-colors"
+        >
+          주문하기
+        </Link>
       </div>
     </motion.div>
   );
