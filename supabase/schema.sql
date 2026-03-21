@@ -92,3 +92,12 @@ INSERT INTO menu_items (id, name, name_en, description, price, category, allerge
   ('omija-ade', '오미자 에이드', NULL, '새콤달콤한 오미자청에 탄산을 더한 시그니처 음료.', 6000, 'beverage', ARRAY[]::TEXT[], TRUE, FALSE, 12),
   ('misugaru-latte', '미숫가루 라떼', NULL, '고소한 미숫가루와 우유의 부드러운 조화.', 5500, 'beverage', ARRAY['dairy', 'soy'], FALSE, FALSE, 13)
 ON CONFLICT (id) DO NOTHING;
+
+-- === 주문 시스템 마이그레이션 ===
+-- menu_categories에 배송 방식 컬럼 추가
+ALTER TABLE menu_categories ADD COLUMN IF NOT EXISTS available_delivery_methods TEXT[] DEFAULT '{"pickup"}';
+ALTER TABLE menu_categories ADD COLUMN IF NOT EXISTS default_shipping_fee INTEGER DEFAULT 0;
+
+-- 기존 카테고리 배송 방식 설정
+UPDATE menu_categories SET available_delivery_methods = '{"pickup"}' WHERE id IN ('rice-cake', 'cake');
+UPDATE menu_categories SET available_delivery_methods = '{"pickup", "shipping"}' WHERE id IN ('cookie', 'beverage');
