@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -9,6 +10,7 @@ import {
   allergenInfo,
   formatPrice,
 } from "@/data/menu";
+import { useCart } from "./CartProvider";
 
 // 카테고리별 플레이스홀더 스타일
 const categoryStyles: Record<
@@ -67,7 +69,22 @@ interface MenuCardProps {
 }
 
 export default function MenuCard({ item, index }: MenuCardProps) {
-  const style = categoryStyles[item.category];
+  const [quantity, setQuantity] = useState(1);
+  const { addItem, openCart } = useCart();
+  const style = categoryStyles[item.category] ?? categoryStyles["rice-cake"];
+
+  const handleAddToCart = () => {
+    addItem({
+      menuItemId: item.id,
+      name: item.name,
+      price: item.price,
+      quantity,
+      image: item.image,
+      category: item.category,
+    });
+    setQuantity(1);
+    openCart();
+  };
 
   return (
     <motion.div
@@ -117,6 +134,11 @@ export default function MenuCard({ item, index }: MenuCardProps) {
               NEW
             </span>
           )}
+          {item.isConsultation && (
+            <span className="px-3 py-1 bg-blush-400 text-white text-xs font-bold rounded-full shadow-lg">
+              상담 후 결정
+            </span>
+          )}
         </div>
       </div>
 
@@ -133,9 +155,15 @@ export default function MenuCard({ item, index }: MenuCardProps) {
               </p>
             )}
           </div>
-          <span className="text-lg font-bold text-sage-400 whitespace-nowrap">
-            {formatPrice(item.price)}
-          </span>
+          {item.isConsultation && item.hidePrice ? (
+            <span className="text-sm font-semibold text-blush-400 whitespace-nowrap">
+              상담 후 결정
+            </span>
+          ) : (
+            <span className="text-lg font-bold text-sage-400 whitespace-nowrap">
+              {formatPrice(item.price)}
+            </span>
+          )}
         </div>
 
         <p className="text-sm text-charcoal-200 leading-relaxed mb-3">
@@ -158,12 +186,56 @@ export default function MenuCard({ item, index }: MenuCardProps) {
           </div>
         )}
 
-        <Link
-          href={`/order/${item.id}`}
-          className="mt-auto pt-4 block w-full text-center py-2.5 bg-sage-400 text-white rounded-lg text-sm font-medium hover:bg-sage-500 transition-colors"
-        >
-          주문하기
-        </Link>
+        {/* 하단 버튼 영역 */}
+        <div className="mt-auto pt-4">
+          {item.isConsultation ? (
+            /* 상담 상품 */
+            <a
+              href="https://www.instagram.com/nuknuk_dessert/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 w-full py-2.5 bg-blush-400 text-white rounded-lg text-sm font-medium hover:bg-blush-500 transition-colors"
+            >
+              💬 상담하기 (Instagram DM)
+            </a>
+          ) : (
+            /* 일반 상품 */
+            <div className="flex items-center gap-2">
+              {/* 수량 스테퍼 */}
+              <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                <button
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  className="w-8 h-8 flex items-center justify-center bg-gray-50 text-charcoal-200 text-sm font-bold hover:bg-gray-100"
+                >
+                  −
+                </button>
+                <span className="w-7 text-center text-sm font-semibold text-charcoal-400">
+                  {quantity}
+                </span>
+                <button
+                  onClick={() => setQuantity((q) => Math.min(99, q + 1))}
+                  className="w-8 h-8 flex items-center justify-center bg-gray-50 text-charcoal-200 text-sm font-bold hover:bg-gray-100"
+                >
+                  +
+                </button>
+              </div>
+              {/* 담기 */}
+              <button
+                onClick={handleAddToCart}
+                className="flex-1 h-8 border border-sage-400 text-sage-400 rounded-lg text-xs font-semibold hover:bg-sage-50 transition-colors"
+              >
+                담기
+              </button>
+              {/* 바로구매 */}
+              <Link
+                href={`/order/${item.id}`}
+                className="flex-1 h-8 flex items-center justify-center bg-sage-400 text-white rounded-lg text-xs font-semibold hover:bg-sage-500 transition-colors"
+              >
+                바로구매
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
     </motion.div>
   );
