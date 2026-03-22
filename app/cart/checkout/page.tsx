@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
 import { formatPrice, type CategoryInfo } from "@/data/menu";
@@ -55,7 +55,7 @@ export default function CartCheckoutPage() {
   }, []);
 
   // 수령 방식: 장바구니 상품 카테고리들의 교집합
-  const availableMethods = (() => {
+  const availableMethods = useMemo(() => {
     if (categories.length === 0 || items.length === 0) return ["pickup"];
     const itemCategories = Array.from(new Set(items.map((i) => i.category)));
     const methodSets = itemCategories.map((catId) => {
@@ -66,7 +66,7 @@ export default function CartCheckoutPage() {
       return new Set(Array.from(acc).filter((m) => set.has(m)));
     });
     return intersection.size > 0 ? Array.from(intersection) : ["pickup"];
-  })();
+  }, [categories, items]);
 
   // 수령 방식이 교집합에 포함되지 않으면 첫 번째 방식으로 자동 전환
   useEffect(() => {
