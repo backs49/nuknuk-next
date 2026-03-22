@@ -39,7 +39,22 @@ export interface MenuItem {
 }
 ```
 
-`lib/menu-db.ts`의 `toMenuItem()` 변환 함수에 매핑 추가.
+`lib/menu-db.ts`의 `DbMenuItem` 인터페이스에 snake_case 필드 추가:
+
+```typescript
+export interface DbMenuItem {
+  // ... 기존 필드
+  is_consultation: boolean;
+  hide_price: boolean;
+}
+```
+
+`lib/menu-db.ts`의 `toMenuItem()` 변환 함수에 매핑 추가:
+
+```typescript
+isConsultation: db.is_consultation,
+hidePrice: db.hide_price,
+```
 
 ### 관리자 MenuForm 변경
 
@@ -64,7 +79,7 @@ interface CartItem {
   price: number;
   quantity: number;
   image?: string;
-  category: string;
+  category: string;  // checkout 시 수령 방식 교집합 계산에 사용
 }
 ```
 
@@ -93,17 +108,22 @@ interface CartContextType {
 - 초기 로드 시 `sessionStorage`에서 복원. 없으면 빈 배열.
 - 탭을 닫으면 sessionStorage가 초기화되어 장바구니도 사라짐.
 
-### layout.tsx 적용
+### 배치 위치: `app/layout.tsx`
 
-`app/layout.tsx`에서 `ReservationProvider`를 `CartProvider`로 교체:
+> **주의**: 현재 `ReservationProvider`는 `app/page.tsx`에 있지만, `CartProvider`는 `app/layout.tsx`에 배치한다. 장바구니 상태가 `/cart/checkout`, `/order/[menuItemId]` 등 다른 라우트에서도 접근 가능해야 하기 때문.
+
+`app/layout.tsx`에 `CartProvider` 추가:
 
 ```tsx
-// Before
-<ReservationProvider>{children}</ReservationProvider>
-
-// After
 <CartProvider>{children}</CartProvider>
 ```
+
+`app/page.tsx`에서 `ReservationProvider` import 및 래핑 제거.
+
+### sessionStorage 제약사항
+
+- sessionStorage는 **탭 단위**로 격리됨. 새 탭에서 열면 장바구니가 공유되지 않음.
+- 이는 의도된 동작으로, 비로그인 사용자의 세션 기반 장바구니에 적합.
 
 ---
 
@@ -122,8 +142,8 @@ interface CartContextType {
 ```
 
 - **수량 스테퍼**: 1~99 범위, − / + 버튼
-- **담기 버튼**: `sage-400` 아웃라인. 클릭 시 CartProvider의 `addItem` 호출 + 슬라이드 패널 자동 열기 (또는 토스트 알림)
-- **바로구매 버튼**: `sage-400` 채움. 클릭 시 `/order/[menuItemId]?qty={수량}` 으로 이동 (기존 개별 주문 플로우 유지)
+- **담기 버튼**: `sage-400` 아웃라인. 클릭 시 CartProvider의 `addItem` 호출 + 슬라이드 패널 자동 열기 (`openCart()` 호출)
+- **바로구매 버튼**: `sage-400` 채움. 클릭 시 `/order/[menuItemId]` 으로 이동 (기존 개별 주문 플로우 유지, 수량은 항상 1)
 
 ### 상담 상품 (isConsultation === true)
 
@@ -223,9 +243,27 @@ interface CartContextType {
 
 기존 단일 상품 요청도 하위 호환 유지 (바로구매에서 사용).
 
-### 고객 정보 폼
+### 수령 방식 결정 (다건 주문)
 
-`OrderForm` 컴포넌트의 고객 정보 입력 부분을 재사용하되, 상품 선택 영역은 장바구니 요약으로 대체.
+장바구니에 여러 카테고리 상품이 섞일 수 있다. 수령 방식은 장바구니 전체 상품의 카테고리별 `availableDeliveryMethods`의 **교집합**으로 결정:
+
+- 모든 상품이 `pickup` + `shipping` 가능 → 고객이 선택
+- 일부 상품이 `pickup`만 가능 → 전체 주문이 `pickup`으로 강제
+- 교집합이 빈 경우 → 이론적으로 발생하지 않음 (모든 카테고리에 최소 `pickup` 포함). 방어적으로 `pickup`으로 fallback.
+
+checkout 페이지에서 장바구니 items의 카테고리를 기반으로 카테고리 정보를 `/api/categories`에서 조회하여 교집합을 계산한다.
+
+> **참고**: `/api/categories` fallback 응답(Supabase 미연결 시)에 `availableDeliveryMethods`가 포함되지 않을 수 있으므로, checkout 페이지에서는 해당 필드가 없으면 `["pickup"]`으로 fallback 처리한다.
+
+### 고객 정보 폼 — OrderForm 재사용 전략
+
+현재 `OrderForm`은 단일 `menuItem` + `category`를 props로 받아 수량 선택과 고객 정보를 하나의 폼에서 처리한다.
+
+checkout 페이지에서는 `OrderForm`을 직접 사용하지 않고, **고객 정보 입력 필드(이름, 전화번호, 이메일, 수령 방식, 메모)를 checkout 페이지에 직접 구현**한다. 이유:
+- 장바구니 요약 + 수령 방식(교집합 기반) + 결제 버튼 등 checkout 고유 로직이 많아 OrderForm 래핑보다 직접 구현이 단순
+- OrderForm은 바로구매(`/order/[menuItemId]`) 전용으로 유지
+
+`OrderFormData` 타입은 공유하되, checkout 페이지의 submit은 `items` 배열을 포함하는 확장된 payload를 보낸다.
 
 ---
 
@@ -289,8 +327,10 @@ interface CartContextType {
 | `components/admin/MenuForm.tsx` | 상담/가격숨김 체크박스 추가 |
 | `data/menu.ts` | MenuItem에 isConsultation, hidePrice 추가 |
 | `lib/menu-db.ts` | toMenuItem()에 새 필드 매핑 |
+| `lib/menu-db.ts` | DbMenuItem에 is_consultation, hide_price 추가 + toMenuItem 매핑 |
 | `app/api/orders/route.ts` | 다건 주문(items 배열) 지원 |
-| `app/layout.tsx` | ReservationProvider → CartProvider |
+| `app/layout.tsx` | CartProvider 추가 |
+| `app/page.tsx` | ReservationProvider 제거 |
 | `supabase/schema.sql` | menu_items 컬럼 추가 마이그레이션 |
 
 ### 삭제
