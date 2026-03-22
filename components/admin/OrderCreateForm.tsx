@@ -52,8 +52,8 @@ export default function OrderCreateForm() {
   useEffect(() => {
     fetch("/api/admin/menu")
       .then((res) => res.json())
-      .then((data: { items: DbMenuItem[] }) => {
-        setMenuItems(data.items || []);
+      .then((data: DbMenuItem[]) => {
+        setMenuItems(Array.isArray(data) ? data : []);
       })
       .catch(() => {
         setMenuItems([]);

@@ -71,7 +71,7 @@ export default function MenuCard({ item, index }: MenuCardProps) {
 
   return (
     <motion.div
-      className="group bg-white rounded-2xl overflow-hidden card-hover shadow-md"
+      className="group bg-white rounded-2xl overflow-hidden card-hover shadow-md flex flex-col"
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-30px" }}
@@ -121,7 +121,7 @@ export default function MenuCard({ item, index }: MenuCardProps) {
       </div>
 
       {/* 정보 */}
-      <div className="p-5">
+      <div className="p-5 flex flex-col flex-1">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div>
             <h3 className="text-lg font-bold text-charcoal-400">
@@ -144,7 +144,7 @@ export default function MenuCard({ item, index }: MenuCardProps) {
 
         {/* 알레르기 정보 */}
         {item.allergens.length > 0 && (
-          <div className="flex items-center gap-1 flex-wrap">
+          <div className="flex items-center gap-1 flex-wrap mb-3">
             <span className="text-xs text-charcoal-100 mr-1">알레르기:</span>
             {item.allergens.map((allergen) => (
               <span
@@ -160,7 +160,7 @@ export default function MenuCard({ item, index }: MenuCardProps) {
 
         <Link
           href={`/order/${item.id}`}
-          className="mt-4 block w-full text-center py-2.5 bg-sage-400 text-white rounded-lg text-sm font-medium hover:bg-sage-500 transition-colors"
+          className="mt-auto pt-4 block w-full text-center py-2.5 bg-sage-400 text-white rounded-lg text-sm font-medium hover:bg-sage-500 transition-colors"
         >
           주문하기
         </Link>

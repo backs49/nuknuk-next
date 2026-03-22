@@ -35,8 +35,8 @@ export default function OrderPage() {
     async function fetchData() {
       try {
         const [menuRes, categoriesRes] = await Promise.all([
-          fetch(`/api/admin/menu/${menuItemId}`),
-          fetch("/api/admin/categories"),
+          fetch(`/api/menu/${menuItemId}`),
+          fetch("/api/categories"),
         ]);
 
         if (!menuRes.ok) {
@@ -51,8 +51,17 @@ export default function OrderPage() {
         let foundCategory: CategoryInfo | null = null;
 
         if (categoriesRes.ok) {
-          const cats: CategoryInfo[] = await categoriesRes.json();
-          foundCategory = cats.find((c) => c.id === item.category) || null;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const rawCats: any[] = await categoriesRes.json();
+          const cats: CategoryInfo[] = rawCats.map((c) => ({
+            id: c.id,
+            name: c.name,
+            nameEn: c.name_en ?? c.nameEn ?? "",
+            emoji: c.emoji ?? "",
+            availableDeliveryMethods: c.available_delivery_methods ?? c.availableDeliveryMethods ?? ["pickup", "shipping"],
+            defaultShippingFee: c.default_shipping_fee ?? c.defaultShippingFee ?? 4000,
+          }));
+          foundCategory = cats.find((cat) => cat.id === item.category) || null;
         }
 
         // Fallback to static category data if not found via API

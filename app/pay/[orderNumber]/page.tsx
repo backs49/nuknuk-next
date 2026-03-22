@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { loadPaymentWidget, PaymentWidgetInstance } from "@tosspayments/payment-widget-sdk";
+import type { PaymentWidgetInstance } from "@tosspayments/payment-widget-sdk";
 import Link from "next/link";
 
 const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || "";
@@ -9,7 +9,8 @@ const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || "";
 interface OrderItem {
   name: string;
   quantity: number;
-  price: number;
+  unitPrice: number;
+  subtotal: number;
 }
 
 interface Order {
@@ -89,6 +90,7 @@ export default function PayOrderPage({
     const order = pageState.order;
 
     (async () => {
+      const { loadPaymentWidget } = await import("@tosspayments/payment-widget-sdk");
       const paymentWidget = await loadPaymentWidget(clientKey, customerKey);
 
       const paymentMethodsWidget = paymentWidget.renderPaymentMethods(
@@ -213,7 +215,7 @@ export default function PayOrderPage({
   // Ready state — show order summary + payment widget
   const { order } = pageState;
   const shippingFee = order.shippingFee ?? 0;
-  const itemsTotal = order.items?.reduce((sum, item) => sum + item.price * item.quantity, 0) ?? order.totalAmount;
+  const itemsTotal = order.items?.reduce((sum, item) => sum + item.subtotal, 0) ?? order.totalAmount;
 
   return (
     <div className="min-h-screen bg-cream-100 py-20 px-4">
@@ -245,7 +247,7 @@ export default function PayOrderPage({
                   {item.name}
                   <span className="text-charcoal-200 ml-1">× {item.quantity}</span>
                 </span>
-                <span>{(item.price * item.quantity).toLocaleString()}원</span>
+                <span>{(item.subtotal).toLocaleString()}원</span>
               </div>
             ))}
           </div>

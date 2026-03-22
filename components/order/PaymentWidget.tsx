@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { loadPaymentWidget, PaymentWidgetInstance } from "@tosspayments/payment-widget-sdk";
+import type { PaymentWidgetInstance } from "@tosspayments/payment-widget-sdk";
 
 const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || "";
 
@@ -41,6 +41,7 @@ export default function PaymentWidget({
     if (!customerKey) return;
 
     (async () => {
+      const { loadPaymentWidget } = await import("@tosspayments/payment-widget-sdk");
       const paymentWidget = await loadPaymentWidget(clientKey, customerKey);
 
       const paymentMethodsWidget = paymentWidget.renderPaymentMethods(
@@ -76,9 +77,9 @@ export default function PaymentWidget({
         orderName,
         customerName: customerName || undefined,
         customerEmail: customerEmail || undefined,
-        customerMobilePhone: customerPhone || undefined,
-        successUrl: `${window.location.origin}/pay/success?paymentKey={PAYMENT_KEY}&orderId={ORDER_ID}&amount={AMOUNT}`,
-        failUrl: `${window.location.origin}/pay/fail?code={ERROR_CODE}&message={ERROR_MESSAGE}`,
+        customerMobilePhone: customerPhone?.replace(/-/g, "") || undefined,
+        successUrl: `${window.location.origin}/pay/success`,
+        failUrl: `${window.location.origin}/pay/fail`,
       });
       // 토스 측에서 successUrl / failUrl 로 자동 리다이렉트
     } catch (error) {

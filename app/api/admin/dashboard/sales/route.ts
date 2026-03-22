@@ -23,8 +23,9 @@ export async function GET(request: NextRequest) {
     const fromParam = searchParams.get("from");
     const toParam = searchParams.get("to");
 
-    const from = fromParam ? new Date(fromParam) : defaultFrom;
-    const to = toParam ? new Date(toParam) : now;
+    // T00:00:00 붙여야 로컬 타임존으로 파싱됨 (date-only는 UTC로 파싱)
+    const from = fromParam ? new Date(fromParam + "T00:00:00") : defaultFrom;
+    const to = toParam ? new Date(toParam + "T23:59:59.999") : now;
 
     const { data, error } = await supabase
       .from("orders")

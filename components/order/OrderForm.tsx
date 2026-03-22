@@ -61,8 +61,9 @@ function Section({
 }
 
 export default function OrderForm({ menuItem, category, onSubmit }: OrderFormProps) {
-  const supportsPickup = category.availableDeliveryMethods.includes("pickup");
-  const supportsShipping = category.availableDeliveryMethods.includes("shipping");
+  const deliveryMethods = category.availableDeliveryMethods ?? ["pickup", "shipping"];
+  const supportsPickup = deliveryMethods.includes("pickup");
+  const supportsShipping = deliveryMethods.includes("shipping");
   const defaultMethod = supportsPickup ? "pickup" : "shipping";
 
   const [form, setForm] = useState<OrderFormData>({

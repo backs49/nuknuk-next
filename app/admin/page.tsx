@@ -147,27 +147,27 @@ export default function AdminDashboardPage() {
     Promise.all([
       fetch(`/api/admin/dashboard/sales?${params}&granularity=daily`)
         .then((r) => r.json())
-        .then((d: { data: DailyDataPoint[] }) => setDailyData(d.data ?? []))
+        .then((d: DailyDataPoint[] | { data: DailyDataPoint[] }) => setDailyData(Array.isArray(d) ? d : d.data ?? []))
         .catch(() => setDailyData([])),
 
       fetch(`/api/admin/dashboard/sales?${monthlyParams}`)
         .then((r) => r.json())
-        .then((d: { data: MonthlyDataPoint[] }) => setMonthlyData(d.data ?? []))
+        .then((d: MonthlyDataPoint[] | { data: MonthlyDataPoint[] }) => setMonthlyData(Array.isArray(d) ? d : d.data ?? []))
         .catch(() => setMonthlyData([])),
 
       fetch(`/api/admin/dashboard/breakdown?type=category&${params}`)
         .then((r) => r.json())
-        .then((d: { data: BreakdownDataPoint[] }) => setCategoryBreakdown(d.data ?? []))
+        .then((d: BreakdownDataPoint[] | { data: BreakdownDataPoint[] }) => setCategoryBreakdown(Array.isArray(d) ? d : d.data ?? []))
         .catch(() => setCategoryBreakdown([])),
 
       fetch(`/api/admin/dashboard/breakdown?type=product&${params}`)
         .then((r) => r.json())
-        .then((d: { data: BreakdownDataPoint[] }) => setProductBreakdown(d.data ?? []))
+        .then((d: BreakdownDataPoint[] | { data: BreakdownDataPoint[] }) => setProductBreakdown(Array.isArray(d) ? d : d.data ?? []))
         .catch(() => setProductBreakdown([])),
 
       fetch(`/api/admin/dashboard/breakdown?type=channel&${params}`)
         .then((r) => r.json())
-        .then((d: { data: BreakdownDataPoint[] }) => setChannelBreakdown(d.data ?? []))
+        .then((d: BreakdownDataPoint[] | { data: BreakdownDataPoint[] }) => setChannelBreakdown(Array.isArray(d) ? d : d.data ?? []))
         .catch(() => setChannelBreakdown([])),
     ]);
   }, [dateRange]);
