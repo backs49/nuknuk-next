@@ -6,7 +6,6 @@ import LocationSection from "@/components/LocationSection";
 import InstagramFeed from "@/components/InstagramFeed";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
-import ReservationProvider from "@/components/ReservationProvider";
 import { getMenuItems, getCategories } from "@/lib/menu-db";
 
 export const revalidate = 60; // 60초마다 메뉴 데이터 재검증
@@ -18,7 +17,7 @@ export default async function Home() {
   ]);
 
   return (
-    <ReservationProvider>
+    <>
       <Header />
       <main>
         <HeroSection />
@@ -29,6 +28,6 @@ export default async function Home() {
         <CTASection />
       </main>
       <Footer />
-    </ReservationProvider>
+    </>
   );
 }

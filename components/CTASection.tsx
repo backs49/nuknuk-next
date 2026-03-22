@@ -2,10 +2,17 @@
 
 import { motion } from "framer-motion";
 import FadeIn from "./FadeIn";
-import { useReservation } from "./ReservationProvider";
+import { useCart } from "./CartProvider";
 
 export default function CTASection() {
-  const { openReservation } = useReservation();
+  const { totalItems, openCart } = useCart();
+  const handleCartClick = () => {
+    if (totalItems > 0) {
+      openCart();
+    } else {
+      document.getElementById("menu")?.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   return (
     <section className="relative py-24 md:py-32 overflow-hidden">
@@ -44,10 +51,10 @@ export default function CTASection() {
         <FadeIn delay={0.2}>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
-              onClick={openReservation}
+              onClick={handleCartClick}
               className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-full bg-white text-sage-400 font-bold text-base hover:bg-cream-100 active:scale-95 transition-all duration-300 shadow-xl hover:shadow-2xl"
             >
-              지금 예약하기
+              장바구니 보기
             </button>
             <a
               href="https://naver.me/xOxTmNiu"

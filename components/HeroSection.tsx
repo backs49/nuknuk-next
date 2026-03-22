@@ -1,10 +1,17 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useReservation } from "./ReservationProvider";
+import { useCart } from "./CartProvider";
 
 export default function HeroSection() {
-  const { openReservation } = useReservation();
+  const { totalItems, openCart } = useCart();
+  const handleCartClick = () => {
+    if (totalItems > 0) {
+      openCart();
+    } else {
+      document.getElementById("menu")?.scrollIntoView({ behavior: "smooth" });
+    }
+  };
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* 배경 — 다층 그라데이션 */}
@@ -96,10 +103,10 @@ export default function HeroSection() {
             메뉴 보기
           </a>
           <button
-            onClick={openReservation}
+            onClick={handleCartClick}
             className="btn-secondary text-base"
           >
-            예약하기
+            장바구니 보기
           </button>
         </motion.div>
 

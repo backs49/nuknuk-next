@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { useReservation } from "@/components/ReservationProvider";
+import { useCart } from "@/components/CartProvider";
 
 const navLinks = [
   { href: "#menu", label: "메뉴" },
@@ -15,7 +15,15 @@ const navLinks = [
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { openReservation } = useReservation();
+  const { totalItems, openCart } = useCart();
+
+  const handleCartClick = () => {
+    if (totalItems > 0) {
+      openCart();
+    } else {
+      document.getElementById("menu")?.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -64,10 +72,15 @@ export default function Header() {
               </a>
             ))}
             <button
-              onClick={openReservation}
-              className="btn-primary text-sm !px-6 !py-2.5"
+              onClick={handleCartClick}
+              className="relative btn-primary text-sm !px-6 !py-2.5"
             >
-              예약하기
+              🛒 장바구니
+              {totalItems > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-blush-400 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {totalItems > 99 ? "99+" : totalItems}
+                </span>
+              )}
             </button>
           </nav>
 
@@ -117,16 +130,21 @@ export default function Header() {
               </motion.a>
             ))}
             <motion.button
-              className="btn-primary mt-4"
+              className="btn-primary mt-4 relative"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
               onClick={() => {
                 setMobileOpen(false);
-                openReservation();
+                handleCartClick();
               }}
             >
-              예약하기
+              🛒 장바구니
+              {totalItems > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-blush-400 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {totalItems > 99 ? "99+" : totalItems}
+                </span>
+              )}
             </motion.button>
           </motion.div>
         )}
