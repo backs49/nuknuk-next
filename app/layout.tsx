@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Playfair_Display } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
+import CartProvider from "@/components/CartProvider";
 
 // Playfair Display — 영문 디스플레이 폰트
 const playfair = Playfair_Display({
@@ -77,7 +78,9 @@ export default function RootLayout({
         className={`${playfair.variable} ${geistSans.variable} antialiased`}
         style={{ fontFamily: "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif" }}
       >
-        {children}
+        <CartProvider>
+          {children}
+        </CartProvider>
       </body>
     </html>
   );
