@@ -101,3 +101,7 @@ ALTER TABLE menu_categories ADD COLUMN IF NOT EXISTS default_shipping_fee INTEGE
 -- 기존 카테고리 배송 방식 설정
 UPDATE menu_categories SET available_delivery_methods = '{"pickup"}' WHERE id IN ('rice-cake', 'cake');
 UPDATE menu_categories SET available_delivery_methods = '{"pickup", "shipping"}' WHERE id IN ('cookie', 'beverage');
+
+-- 2026-03-22: 상담 상품 지원
+ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS is_consultation BOOLEAN DEFAULT false;
+ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS hide_price BOOLEAN DEFAULT false;

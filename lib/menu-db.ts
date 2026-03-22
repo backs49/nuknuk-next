@@ -150,6 +150,8 @@ export interface DbMenuItem {
   allergens: string[];
   is_popular: boolean;
   is_new: boolean;
+  is_consultation: boolean;
+  hide_price: boolean;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -168,6 +170,8 @@ export function toMenuItem(db: DbMenuItem): MenuItem {
     allergens: db.allergens as MenuItem["allergens"],
     isPopular: db.is_popular,
     isNew: db.is_new,
+    isConsultation: db.is_consultation,
+    hidePrice: db.hide_price,
   };
 }
 
@@ -184,6 +188,8 @@ function toDbMenuItem(item: MenuItem, index: number): DbMenuItem {
     allergens: item.allergens,
     is_popular: item.isPopular ?? false,
     is_new: item.isNew ?? false,
+    is_consultation: item.isConsultation ?? false,
+    hide_price: item.hidePrice ?? false,
     sort_order: index,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
