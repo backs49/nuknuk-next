@@ -24,6 +24,8 @@ export interface MenuFormData {
   allergens: string[];
   is_popular: boolean;
   is_new: boolean;
+  is_consultation: boolean;
+  hide_price: boolean;
   sort_order: number;
 }
 
@@ -67,6 +69,8 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
     allergens: initialData?.allergens || [],
     is_popular: initialData?.is_popular || false,
     is_new: initialData?.is_new || false,
+    is_consultation: initialData?.is_consultation || false,
+    hide_price: initialData?.hide_price || false,
     sort_order: initialData?.sort_order || 0,
   });
 
@@ -353,6 +357,34 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
             />
             <span className="text-sm text-charcoal-300">신메뉴</span>
           </label>
+        </div>
+      </Section>
+
+      {/* 상담 상품 설정 */}
+      <Section title="상담 상품 설정">
+        <div className="space-y-3">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.is_consultation}
+              onChange={(e) => setForm({ ...form, is_consultation: e.target.checked, hide_price: e.target.checked ? form.hide_price : false })}
+              className="w-4 h-4 rounded border-gray-300 text-sage-400 focus:ring-sage-400"
+            />
+            <span className="text-sm text-charcoal-300">상담 후 결정 상품</span>
+          </label>
+          <p className="text-xs text-charcoal-100 ml-6">체크 시 장바구니/바로구매 대신 &quot;상담하기&quot; 버튼이 표시됩니다.</p>
+
+          {form.is_consultation && (
+            <label className="flex items-center gap-2 cursor-pointer ml-6">
+              <input
+                type="checkbox"
+                checked={form.hide_price}
+                onChange={(e) => setForm({ ...form, hide_price: e.target.checked })}
+                className="w-4 h-4 rounded border-gray-300 text-sage-400 focus:ring-sage-400"
+              />
+              <span className="text-sm text-charcoal-300">가격 숨기기</span>
+            </label>
+          )}
         </div>
       </Section>
 

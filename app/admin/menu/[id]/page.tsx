@@ -31,6 +31,8 @@ export default function EditMenuPage() {
           allergens: item.allergens || [],
           is_popular: item.is_popular || item.isPopular || false,
           is_new: item.is_new || item.isNew || false,
+          is_consultation: item.is_consultation || false,
+          hide_price: item.hide_price || false,
           sort_order: item.sort_order || 0,
         });
       })
