@@ -3,10 +3,12 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useCart } from "@/components/CartProvider";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { clearCart } = useCart();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -31,6 +33,7 @@ function SuccessContent() {
 
         if (response.ok) {
           setStatus("success");
+          clearCart();
 
           // 3초 후 메인 페이지로 자동 이동
           setTimeout(() => {
