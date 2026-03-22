@@ -8,6 +8,8 @@ interface Category {
   name_en: string | null;
   emoji: string;
   sort_order: number;
+  available_delivery_methods: string[];
+  default_shipping_fee: number;
 }
 
 interface FormData {
@@ -16,6 +18,9 @@ interface FormData {
   name_en: string;
   emoji: string;
   sort_order: number;
+  pickup: boolean;
+  shipping: boolean;
+  default_shipping_fee: number;
 }
 
 const emptyForm: FormData = {
@@ -24,6 +29,9 @@ const emptyForm: FormData = {
   name_en: "",
   emoji: "",
   sort_order: 0,
+  pickup: true,
+  shipping: false,
+  default_shipping_fee: 0,
 };
 
 export default function CategoriesPage() {
@@ -64,12 +72,16 @@ export default function CategoriesPage() {
   }
 
   function startEdit(cat: Category) {
+    const methods = cat.available_delivery_methods ?? ["pickup"];
     setForm({
       id: cat.id,
       name: cat.name,
       name_en: cat.name_en ?? "",
       emoji: cat.emoji,
       sort_order: cat.sort_order,
+      pickup: methods.includes("pickup"),
+      shipping: methods.includes("shipping"),
+      default_shipping_fee: cat.default_shipping_fee ?? 0,
     });
     setEditingId(cat.id);
     setShowForm(true);
@@ -95,6 +107,10 @@ export default function CategoriesPage() {
       setError("카테고리 ID를 입력하세요.");
       return;
     }
+    if (!form.pickup && !form.shipping) {
+      setError("수령 방식을 최소 1개 이상 선택하세요.");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -104,20 +120,22 @@ export default function CategoriesPage() {
         : "/api/admin/categories";
       const method = isEdit ? "PUT" : "POST";
 
+      const deliveryMethods: string[] = [];
+      if (form.pickup) deliveryMethods.push("pickup");
+      if (form.shipping) deliveryMethods.push("shipping");
+
+      const commonFields = {
+        name: form.name,
+        name_en: form.name_en || null,
+        emoji: form.emoji,
+        sort_order: form.sort_order,
+        available_delivery_methods: deliveryMethods,
+        default_shipping_fee: form.shipping ? form.default_shipping_fee : 0,
+      };
+
       const body = isEdit
-        ? {
-            name: form.name,
-            name_en: form.name_en || null,
-            emoji: form.emoji,
-            sort_order: form.sort_order,
-          }
-        : {
-            id: form.id,
-            name: form.name,
-            name_en: form.name_en || null,
-            emoji: form.emoji,
-            sort_order: form.sort_order,
-          };
+        ? commonFields
+        : { id: form.id, ...commonFields };
 
       const res = await fetch(url, {
         method,
@@ -285,6 +303,63 @@ export default function CategoriesPage() {
               </div>
             </div>
 
+            {/* 수령 방식 */}
+            <div className="border-t border-gray-100 pt-4 mt-2">
+              <label className="block text-sm font-medium text-charcoal-300 mb-2">
+                수령 방식 <span className="text-red-400">*</span>
+              </label>
+              <div className="flex items-center gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.pickup}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, pickup: e.target.checked }))
+                    }
+                    className="w-4 h-4 text-sage-400 rounded focus:ring-sage-400"
+                  />
+                  <span className="text-sm text-charcoal-400">픽업 (매장 수령)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.shipping}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, shipping: e.target.checked }))
+                    }
+                    className="w-4 h-4 text-sage-400 rounded focus:ring-sage-400"
+                  />
+                  <span className="text-sm text-charcoal-400">택배 배송</span>
+                </label>
+              </div>
+
+              {/* 택배비 (택배 배송 선택 시) */}
+              {form.shipping && (
+                <div className="mt-3">
+                  <label className="block text-sm font-medium text-charcoal-300 mb-1">
+                    택배비 (원)
+                  </label>
+                  <input
+                    type="number"
+                    value={form.default_shipping_fee}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        default_shipping_fee: Math.max(0, Number(e.target.value)),
+                      }))
+                    }
+                    className="input w-40"
+                    min={0}
+                    step={500}
+                    placeholder="4000"
+                  />
+                  <p className="text-xs text-charcoal-100 mt-1">
+                    이 카테고리 상품의 기본 택배비
+                  </p>
+                </div>
+              )}
+            </div>
+
             {error && (
               <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">
                 {error}
@@ -335,6 +410,9 @@ export default function CategoriesPage() {
                 <th className="text-left text-xs font-medium text-charcoal-200 uppercase tracking-wider px-6 py-4">
                   영문명
                 </th>
+                <th className="text-left text-xs font-medium text-charcoal-200 uppercase tracking-wider px-6 py-4">
+                  수령 방식
+                </th>
                 <th className="text-right text-xs font-medium text-charcoal-200 uppercase tracking-wider px-6 py-4">
                   관리
                 </th>
@@ -365,6 +443,28 @@ export default function CategoriesPage() {
                     <span className="text-sm text-charcoal-200">
                       {cat.name_en || "-"}
                     </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap gap-1.5">
+                      {(cat.available_delivery_methods ?? ["pickup"]).map((m) => (
+                        <span
+                          key={m}
+                          className={`text-xs px-2 py-0.5 rounded-full ${
+                            m === "pickup"
+                              ? "bg-sage-400/10 text-sage-400"
+                              : "bg-blue-50 text-blue-500"
+                          }`}
+                        >
+                          {m === "pickup" ? "픽업" : "택배"}
+                        </span>
+                      ))}
+                      {(cat.available_delivery_methods ?? []).includes("shipping") &&
+                        cat.default_shipping_fee > 0 && (
+                          <span className="text-xs text-charcoal-100">
+                            ({cat.default_shipping_fee.toLocaleString()}원)
+                          </span>
+                        )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">

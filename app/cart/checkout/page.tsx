@@ -108,7 +108,7 @@ export default function CartCheckoutPage() {
       return;
     }
     if (deliveryMethod === "pickup" && !pickupDate) {
-      setError("수령 희망일을 선택해주세요.");
+      setError("픽업 날짜와 시간을 선택해주세요.");
       return;
     }
     if (deliveryMethod === "shipping" && !deliveryAddress.trim()) {
@@ -178,11 +178,6 @@ export default function CartCheckoutPage() {
       </div>
     );
   }
-
-  // 최소 수령일: 2일 후
-  const minDate = new Date();
-  minDate.setDate(minDate.getDate() + 2);
-  const minDateStr = minDate.toISOString().split("T")[0];
 
   return (
     <div className="min-h-screen bg-cream-100 py-12">
@@ -263,45 +258,75 @@ export default function CartCheckoutPage() {
         <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm space-y-4">
           <h2 className="font-bold text-charcoal-400 mb-2">수령 방식</h2>
 
-          <div className="flex gap-3">
-            {availableMethods.includes("pickup") && (
-              <label className="flex items-center gap-2 cursor-pointer">
+          {availableMethods.includes("pickup") && availableMethods.includes("shipping") ? (
+            <div className="flex gap-4">
+              <label className="flex-1">
                 <input
                   type="radio"
                   name="delivery"
                   value="pickup"
                   checked={deliveryMethod === "pickup"}
                   onChange={() => setDeliveryMethod("pickup")}
-                  className="text-sage-400 focus:ring-sage-400"
+                  className="sr-only"
                 />
-                <span className="text-sm text-charcoal-300">매장 수령</span>
+                <div
+                  className={`border-2 rounded-xl p-4 cursor-pointer transition ${
+                    deliveryMethod === "pickup"
+                      ? "border-sage-400 bg-sage-400/5"
+                      : "border-gray-200 hover:border-warm-300"
+                  }`}
+                >
+                  <p className="font-medium text-charcoal-400">픽업</p>
+                  <p className="text-xs text-charcoal-200 mt-0.5">직접 방문 수령</p>
+                </div>
               </label>
-            )}
-            {availableMethods.includes("shipping") && (
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex-1">
                 <input
                   type="radio"
                   name="delivery"
                   value="shipping"
                   checked={deliveryMethod === "shipping"}
                   onChange={() => setDeliveryMethod("shipping")}
-                  className="text-sage-400 focus:ring-sage-400"
+                  className="sr-only"
                 />
-                <span className="text-sm text-charcoal-300">택배 배송</span>
+                <div
+                  className={`border-2 rounded-xl p-4 cursor-pointer transition ${
+                    deliveryMethod === "shipping"
+                      ? "border-sage-400 bg-sage-400/5"
+                      : "border-gray-200 hover:border-warm-300"
+                  }`}
+                >
+                  <p className="font-medium text-charcoal-400">택배 배송</p>
+                  <p className="text-xs text-charcoal-200 mt-0.5">
+                    배송비 {formatPrice(shippingFee)} 추가
+                  </p>
+                </div>
               </label>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="py-2">
+              <div className="border-2 border-sage-400 bg-sage-400/5 rounded-xl p-4">
+                <p className="font-medium text-charcoal-400">
+                  {availableMethods.includes("pickup") ? "픽업" : "택배 배송"}
+                </p>
+                <p className="text-xs text-charcoal-200 mt-0.5">
+                  {availableMethods.includes("pickup")
+                    ? "이 상품은 픽업으로만 수령 가능합니다"
+                    : `배송비 ${formatPrice(shippingFee)} 추가`}
+                </p>
+              </div>
+            </div>
+          )}
 
           {deliveryMethod === "pickup" && (
             <div>
               <label className="block text-sm font-medium text-charcoal-300 mb-1">
-                수령 희망일 <span className="text-red-400">*</span>
+                픽업 날짜 · 시간 <span className="text-red-400">*</span>
               </label>
               <input
-                type="date"
+                type="datetime-local"
                 value={pickupDate}
                 onChange={(e) => setPickupDate(e.target.value)}
-                min={minDateStr}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage-400/50"
               />
               <p className="text-xs text-charcoal-100 mt-1">최소 2일 전 주문 부탁드립니다.</p>
@@ -313,12 +338,11 @@ export default function CartCheckoutPage() {
               <label className="block text-sm font-medium text-charcoal-300 mb-1">
                 배송 주소 <span className="text-red-400">*</span>
               </label>
-              <input
-                type="text"
+              <textarea
                 value={deliveryAddress}
                 onChange={(e) => setDeliveryAddress(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage-400/50"
-                placeholder="서울시 강남구..."
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage-400/50 min-h-[80px] resize-y"
+                placeholder="도로명 주소 및 상세 주소를 입력해 주세요"
               />
               <p className="text-xs text-charcoal-100 mt-1">
                 배송비: {formatPrice(shippingFee)}

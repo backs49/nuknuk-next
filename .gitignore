@@ -35,6 +35,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# superpowers
+.superpowers/
+
 # claude
 CLAUDE.md
 .env.example
