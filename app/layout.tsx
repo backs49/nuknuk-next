@@ -3,6 +3,7 @@ import { Playfair_Display } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import CartProvider from "@/components/CartProvider";
+import CartSlidePanel from "@/components/CartSlidePanel";
 
 // Playfair Display — 영문 디스플레이 폰트
 const playfair = Playfair_Display({
@@ -80,6 +81,7 @@ export default function RootLayout({
       >
         <CartProvider>
           {children}
+          <CartSlidePanel />
         </CartProvider>
       </body>
     </html>
