@@ -1,0 +1,379 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useCart } from "@/components/CartProvider";
+import { formatPrice, type CategoryInfo } from "@/data/menu";
+import PaymentWidget from "@/components/order/PaymentWidget";
+
+interface CreatedOrder {
+  orderNumber: string;
+  totalAmount: number;
+  orderName: string;
+}
+
+type Step = "form" | "payment";
+
+export default function CartCheckoutPage() {
+  const { items, totalPrice } = useCart();
+
+  const [step, setStep] = useState<Step>("form");
+  const [createdOrder, setCreatedOrder] = useState<CreatedOrder | null>(null);
+
+  // 카테고리 정보 (수령 방식 결정용)
+  const [categories, setCategories] = useState<CategoryInfo[]>([]);
+
+  // 폼 상태
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "shipping">("pickup");
+  const [pickupDate, setPickupDate] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [customerMemo, setCustomerMemo] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  // 카테고리 정보 fetch
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((data) => {
+        const cats = Array.isArray(data) ? data : [];
+        setCategories(
+          cats.map((c: Record<string, unknown>) => ({
+            id: (c.id as string) || "",
+            name: (c.name as string) || "",
+            nameEn: (c.name_en as string) || "",
+            emoji: (c.emoji as string) || "",
+            availableDeliveryMethods: (c.available_delivery_methods as string[]) ?? (c.availableDeliveryMethods as string[]) ?? ["pickup"],
+            defaultShippingFee: (c.default_shipping_fee as number) ?? (c.defaultShippingFee as number) ?? 0,
+          }))
+        );
+      })
+      .catch(() => {});
+  }, []);
+
+  // 수령 방식: 장바구니 상품 카테고리들의 교집합
+  const availableMethods = (() => {
+    if (categories.length === 0 || items.length === 0) return ["pickup"];
+    const itemCategories = Array.from(new Set(items.map((i) => i.category)));
+    const methodSets = itemCategories.map((catId) => {
+      const cat = categories.find((c) => c.id === catId);
+      return new Set(cat?.availableDeliveryMethods ?? ["pickup"]);
+    });
+    const intersection = methodSets.reduce((acc, set) => {
+      return new Set(Array.from(acc).filter((m) => set.has(m)));
+    });
+    return intersection.size > 0 ? Array.from(intersection) : ["pickup"];
+  })();
+
+  // 수령 방식이 교집합에 포함되지 않으면 첫 번째 방식으로 자동 전환
+  useEffect(() => {
+    if (!availableMethods.includes(deliveryMethod)) {
+      setDeliveryMethod(availableMethods[0] as "pickup" | "shipping");
+    }
+  }, [availableMethods, deliveryMethod]);
+
+  // 배송비 계산
+  const shippingFee = (() => {
+    if (deliveryMethod !== "shipping") return 0;
+    const itemCategories = Array.from(new Set(items.map((i) => i.category)));
+    const fees = itemCategories.map((catId) => {
+      const cat = categories.find((c) => c.id === catId);
+      return cat?.defaultShippingFee ?? 0;
+    });
+    return Math.max(...fees, 0);
+  })();
+
+  const grandTotal = totalPrice + shippingFee;
+
+  // 장바구니 비어있으면 리다이렉트
+  if (items.length === 0 && step === "form") {
+    return (
+      <div className="min-h-screen bg-cream-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-charcoal-200 mb-4">장바구니가 비어있습니다</p>
+          <Link href="/" className="text-sage-400 font-medium hover:underline">
+            메뉴 보기
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSubmit = async () => {
+    if (!customerName.trim() || !customerPhone.trim()) {
+      setError("이름과 전화번호를 입력해주세요.");
+      return;
+    }
+    if (deliveryMethod === "pickup" && !pickupDate) {
+      setError("수령 희망일을 선택해주세요.");
+      return;
+    }
+    if (deliveryMethod === "shipping" && !deliveryAddress.trim()) {
+      setError("배송 주소를 입력해주세요.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map((i) => ({
+            menuItemId: i.menuItemId,
+            quantity: i.quantity,
+          })),
+          customerName: customerName.trim(),
+          customerPhone: customerPhone.replace(/-/g, ""),
+          customerEmail: customerEmail.trim() || undefined,
+          deliveryMethod,
+          pickupDate: deliveryMethod === "pickup" ? pickupDate : undefined,
+          deliveryAddress: deliveryMethod === "shipping" ? deliveryAddress.trim() : undefined,
+          customerMemo: customerMemo.trim() || undefined,
+          shippingFee,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "주문 생성 실패");
+
+      const order = data.order;
+      const orderName =
+        items.length === 1
+          ? items[0].name
+          : `${items[0].name} 외 ${items.length - 1}건`;
+
+      setCreatedOrder({
+        orderNumber: order.orderNumber,
+        totalAmount: order.totalAmount,
+        orderName,
+      });
+      setStep("payment");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "주문 생성에 실패했습니다");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (step === "payment" && createdOrder) {
+    return (
+      <div className="min-h-screen bg-cream-100 py-12">
+        <div className="max-w-lg mx-auto px-5">
+          <h1 className="text-2xl font-bold text-charcoal-400 mb-6">결제</h1>
+          <PaymentWidget
+            amount={createdOrder.totalAmount}
+            orderNumber={createdOrder.orderNumber}
+            orderName={createdOrder.orderName}
+            customerName={customerName}
+            customerEmail={customerEmail}
+            customerPhone={customerPhone.replace(/-/g, "")}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // 최소 수령일: 2일 후
+  const minDate = new Date();
+  minDate.setDate(minDate.getDate() + 2);
+  const minDateStr = minDate.toISOString().split("T")[0];
+
+  return (
+    <div className="min-h-screen bg-cream-100 py-12">
+      <div className="max-w-2xl mx-auto px-5">
+        {/* 헤더 */}
+        <div className="flex items-center gap-3 mb-8">
+          <Link href="/" className="text-charcoal-200 hover:text-charcoal-400">
+            ← 돌아가기
+          </Link>
+          <h1 className="text-2xl font-bold text-charcoal-400">주문서</h1>
+        </div>
+
+        {/* 주문 상품 요약 */}
+        <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
+          <h2 className="font-bold text-charcoal-400 mb-4">주문 상품</h2>
+          {items.map((item) => (
+            <div key={item.menuItemId} className="flex justify-between py-2 border-b border-gray-50 last:border-0">
+              <div>
+                <span className="text-sm text-charcoal-400">{item.name}</span>
+                <span className="text-xs text-charcoal-100 ml-2">x {item.quantity}</span>
+              </div>
+              <span className="text-sm font-medium text-charcoal-400">
+                {formatPrice(item.price * item.quantity)}
+              </span>
+            </div>
+          ))}
+          <div className="flex justify-between pt-3 mt-2 border-t border-gray-200">
+            <span className="font-bold text-charcoal-400">상품 합계</span>
+            <span className="font-bold text-sage-400">{formatPrice(totalPrice)}</span>
+          </div>
+        </div>
+
+        {/* 고객 정보 */}
+        <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm space-y-4">
+          <h2 className="font-bold text-charcoal-400 mb-2">고객 정보</h2>
+
+          <div>
+            <label className="block text-sm font-medium text-charcoal-300 mb-1">
+              이름 <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage-400/50"
+              placeholder="홍길동"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-charcoal-300 mb-1">
+              전화번호 <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="tel"
+              value={customerPhone}
+              onChange={(e) => setCustomerPhone(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage-400/50"
+              placeholder="010-1234-5678"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-charcoal-300 mb-1">
+              이메일
+            </label>
+            <input
+              type="email"
+              value={customerEmail}
+              onChange={(e) => setCustomerEmail(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage-400/50"
+              placeholder="example@email.com"
+            />
+          </div>
+        </div>
+
+        {/* 수령 방식 */}
+        <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm space-y-4">
+          <h2 className="font-bold text-charcoal-400 mb-2">수령 방식</h2>
+
+          <div className="flex gap-3">
+            {availableMethods.includes("pickup") && (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="delivery"
+                  value="pickup"
+                  checked={deliveryMethod === "pickup"}
+                  onChange={() => setDeliveryMethod("pickup")}
+                  className="text-sage-400 focus:ring-sage-400"
+                />
+                <span className="text-sm text-charcoal-300">매장 수령</span>
+              </label>
+            )}
+            {availableMethods.includes("shipping") && (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="delivery"
+                  value="shipping"
+                  checked={deliveryMethod === "shipping"}
+                  onChange={() => setDeliveryMethod("shipping")}
+                  className="text-sage-400 focus:ring-sage-400"
+                />
+                <span className="text-sm text-charcoal-300">택배 배송</span>
+              </label>
+            )}
+          </div>
+
+          {deliveryMethod === "pickup" && (
+            <div>
+              <label className="block text-sm font-medium text-charcoal-300 mb-1">
+                수령 희망일 <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="date"
+                value={pickupDate}
+                onChange={(e) => setPickupDate(e.target.value)}
+                min={minDateStr}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage-400/50"
+              />
+              <p className="text-xs text-charcoal-100 mt-1">최소 2일 전 주문 부탁드립니다.</p>
+            </div>
+          )}
+
+          {deliveryMethod === "shipping" && (
+            <div>
+              <label className="block text-sm font-medium text-charcoal-300 mb-1">
+                배송 주소 <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={deliveryAddress}
+                onChange={(e) => setDeliveryAddress(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage-400/50"
+                placeholder="서울시 강남구..."
+              />
+              <p className="text-xs text-charcoal-100 mt-1">
+                배송비: {formatPrice(shippingFee)}
+              </p>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-charcoal-300 mb-1">
+              요청사항
+            </label>
+            <textarea
+              value={customerMemo}
+              onChange={(e) => setCustomerMemo(e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage-400/50 resize-none"
+              placeholder="요청사항을 입력해주세요"
+            />
+          </div>
+        </div>
+
+        {/* 결제 요약 */}
+        <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
+          <div className="flex justify-between mb-2">
+            <span className="text-sm text-charcoal-200">상품 합계</span>
+            <span className="text-sm text-charcoal-400">{formatPrice(totalPrice)}</span>
+          </div>
+          {shippingFee > 0 && (
+            <div className="flex justify-between mb-2">
+              <span className="text-sm text-charcoal-200">배송비</span>
+              <span className="text-sm text-charcoal-400">{formatPrice(shippingFee)}</span>
+            </div>
+          )}
+          <div className="flex justify-between pt-3 border-t border-gray-200">
+            <span className="font-bold text-lg text-charcoal-400">총 결제금액</span>
+            <span className="font-bold text-lg text-sage-400">{formatPrice(grandTotal)}</span>
+          </div>
+        </div>
+
+        {/* 에러 */}
+        {error && (
+          <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm mb-4">
+            {error}
+          </div>
+        )}
+
+        {/* 결제 버튼 */}
+        <button
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="w-full py-4 bg-sage-400 text-white rounded-xl font-bold text-base hover:bg-sage-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? "처리 중..." : `${formatPrice(grandTotal)} 결제하기`}
+        </button>
+      </div>
+    </div>
+  );
+}
