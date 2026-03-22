@@ -52,7 +52,7 @@ function SuccessContent() {
     }
 
     confirmPayment();
-  }, [paymentKey, orderId, amount, router]);
+  }, [paymentKey, orderId, amount, router, clearCart]);
 
   if (status === "loading") {
     return (
