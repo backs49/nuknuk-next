@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { getTossAuthHeader, TOSS_CONFIRM_URL } from "@/lib/toss";
 import { getOrderByNumber, updateOrderPayment } from "@/lib/order-db";
+import { sendKakaoAlimtalk } from "@/lib/kakao-notification";
 
 // 디스코드 푸시 알림 함수
 async function sendDiscordNotification(orderName: string, amount: number) {
@@ -113,6 +114,9 @@ export async function POST(req: Request) {
     const orderName = data?.orderName || "알 수 없는 주문";
     sendDiscordNotification(orderName, amount).catch(console.error);
     sendEmailNotification(orderName, amount).catch(console.error);
+    if (order) {
+      sendKakaoAlimtalk(order).catch(console.error);
+    }
 
     return NextResponse.json({ success: true, data });
   } catch (err) {
