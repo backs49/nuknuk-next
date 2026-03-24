@@ -54,7 +54,10 @@ export default function PaymentWidget({
 
       paymentWidgetRef.current = paymentWidget;
       paymentMethodsWidgetRef.current = paymentMethodsWidget;
-      setIsReady(true);
+      
+      paymentMethodsWidget.on("ready", () => {
+        setIsReady(true);
+      });
     })();
   }, [customerKey, amount]);
 

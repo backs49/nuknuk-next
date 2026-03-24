@@ -103,7 +103,10 @@ export default function PayOrderPage({
 
       paymentWidgetRef.current = paymentWidget;
       paymentMethodsWidgetRef.current = paymentMethodsWidget;
-      setIsReady(true);
+      
+      paymentMethodsWidget.on("ready", () => {
+        setIsReady(true);
+      });
     })();
   }, [pageState, customerKey]);
 
