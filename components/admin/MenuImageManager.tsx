@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 
 const MAX_IMAGES = 8;
@@ -32,6 +32,23 @@ export default function MenuImageManager({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 편집 모드: API에서 기존 이미지 로드
+  useEffect(() => {
+    if (!menuItemId) return;
+    fetch(`/api/admin/menu/${menuItemId}/images`)
+      .then((res) => (res.ok ? res.json() : { images: [] }))
+      .then((resp: { images: { id: string; imageUrl: string; sortOrder: number }[] }) => {
+        const data = resp.images ?? [];
+        if (data.length > 0) {
+          const loaded = data.map((img, idx) => ({ id: img.id, imageUrl: img.imageUrl, sortOrder: idx }));
+          setImages(loaded);
+          onImagesChange(loaded.map((img, idx) => ({ imageUrl: img.imageUrl, sortOrder: idx })));
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [menuItemId]);
 
   function notifyChange(updated: ImageItem[]) {
     onImagesChange(

@@ -59,22 +59,6 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
       });
   }, []);
 
-  useEffect(() => {
-    if (mode === "edit" && initialData?.id) {
-      fetch(`/api/admin/menu/${initialData.id}/images`)
-        .then((res) => (res.ok ? res.json() : { images: [] }))
-        .then((resp: { images: { id: string; imageUrl: string; sortOrder: number }[] }) => {
-          const data = resp.images ?? [];
-          if (data.length > 0) {
-            setImages(data.map((img, idx) => ({ imageUrl: img.imageUrl, sortOrder: idx })));
-          }
-        })
-        .catch(() => {
-          // silently ignore — images just start empty
-        });
-    }
-  }, [mode, initialData?.id]);
-
   const [form, setForm] = useState<MenuFormData>({
     id: initialData?.id || "",
     name: initialData?.name || "",
