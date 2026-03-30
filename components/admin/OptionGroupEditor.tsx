@@ -60,9 +60,10 @@ export default function OptionGroupEditor({
   useEffect(() => {
     if (!menuItemId) return;
     fetch(`/api/admin/menu/${menuItemId}/options`)
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data: OptionGroup[]) => {
-        if (Array.isArray(data) && data.length > 0) {
+      .then((res) => (res.ok ? res.json() : { options: [] }))
+      .then((resp: { options: OptionGroup[] }) => {
+        const data = resp.options ?? [];
+        if (data.length > 0) {
           const sorted = data
             .map((g, i) => ({ ...g, sortOrder: i }))
             .sort((a, b) => a.sortOrder - b.sortOrder);
@@ -209,8 +210,9 @@ export default function OptionGroupEditor({
       // Reload options
       const reloadRes = await fetch(`/api/admin/menu/${menuItemId}/options`);
       if (reloadRes.ok) {
-        const data: OptionGroup[] = await reloadRes.json();
-        if (Array.isArray(data)) {
+        const resp = await reloadRes.json();
+        const data: OptionGroup[] = resp.options ?? [];
+        if (data.length > 0) {
           const sorted = data
             .map((g, i) => ({ ...g, sortOrder: i }))
             .sort((a, b) => a.sortOrder - b.sortOrder);

@@ -128,6 +128,15 @@ export async function saveMenuImages(
     .insert(rows);
 
   if (insertError) throw insertError;
+
+  // 첫 번째 이미지를 menu_items.image(대표 이미지)에 동기화
+  const sorted = [...images].sort((a, b) => a.sortOrder - b.sortOrder);
+  if (sorted.length > 0) {
+    await supabase
+      .from("menu_items")
+      .update({ image: sorted[0].imageUrl })
+      .eq("id", menuItemId);
+  }
 }
 
 export async function deleteMenuImageRecord(imageId: string): Promise<void> {

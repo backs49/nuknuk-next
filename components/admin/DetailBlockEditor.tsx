@@ -26,9 +26,10 @@ export default function DetailBlockEditor({
   useEffect(() => {
     if (!menuItemId) return;
     fetch(`/api/admin/menu/${menuItemId}/detail-blocks`)
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data: DetailBlock[]) => {
-        if (Array.isArray(data) && data.length > 0) {
+      .then((res) => (res.ok ? res.json() : { blocks: [] }))
+      .then((resp: { blocks: DetailBlock[] }) => {
+        const data = resp.blocks ?? [];
+        if (data.length > 0) {
           const sorted = data
             .map((b, i) => ({ ...b, sortOrder: i }))
             .sort((a, b) => a.sortOrder - b.sortOrder);
