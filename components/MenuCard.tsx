@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -10,7 +9,6 @@ import {
   allergenInfo,
   formatPrice,
 } from "@/data/menu";
-import { useCart } from "./CartProvider";
 
 // 카테고리별 플레이스홀더 스타일
 const categoryStyles: Record<
@@ -69,24 +67,9 @@ interface MenuCardProps {
 }
 
 export default function MenuCard({ item, index }: MenuCardProps) {
-  const [quantity, setQuantity] = useState(1);
-  const { addItem, openCart } = useCart();
   const style = categoryStyles[item.category] ?? categoryStyles["rice-cake"];
 
-  const handleAddToCart = () => {
-    addItem({
-      menuItemId: item.id,
-      name: item.name,
-      price: item.price,
-      quantity,
-      image: item.image,
-      category: item.category,
-    });
-    setQuantity(1);
-    openCart();
-  };
-
-  return (
+  const cardContent = (
     <motion.div
       className="group bg-white rounded-2xl overflow-hidden card-hover shadow-md flex flex-col"
       initial={{ opacity: 0, y: 30 }}
@@ -140,6 +123,12 @@ export default function MenuCard({ item, index }: MenuCardProps) {
             </span>
           )}
         </div>
+        {/* 이미지 개수 배지 */}
+        {item.images && item.images.length > 1 && (
+          <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/50 text-white text-xs rounded-full">
+            📷 {item.images.length}
+          </div>
+        )}
       </div>
 
       {/* 정보 */}
@@ -161,7 +150,7 @@ export default function MenuCard({ item, index }: MenuCardProps) {
             </span>
           ) : (
             <span className="text-lg font-bold text-sage-400 whitespace-nowrap">
-              {formatPrice(item.price)}
+              {formatPrice(item.price)}{item.hasOptions ? "~" : ""}
             </span>
           )}
         </div>
@@ -200,43 +189,22 @@ export default function MenuCard({ item, index }: MenuCardProps) {
             </a>
           ) : (
             /* 일반 상품 */
-            <div className="flex items-center gap-2">
-              {/* 수량 스테퍼 */}
-              <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden flex-shrink-0">
-                <button
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className="w-8 h-8 flex items-center justify-center bg-gray-50 text-charcoal-200 text-sm font-bold hover:bg-gray-100"
-                >
-                  −
-                </button>
-                <span className="w-7 text-center text-sm font-semibold text-charcoal-400">
-                  {quantity}
-                </span>
-                <button
-                  onClick={() => setQuantity((q) => Math.min(99, q + 1))}
-                  className="w-8 h-8 flex items-center justify-center bg-gray-50 text-charcoal-200 text-sm font-bold hover:bg-gray-100"
-                >
-                  +
-                </button>
-              </div>
-              {/* 담기 */}
-              <button
-                onClick={handleAddToCart}
-                className="flex-1 h-8 border border-sage-400 text-sage-400 rounded-lg text-xs font-semibold hover:bg-sage-50 transition-colors"
-              >
-                담기
-              </button>
-              {/* 바로구매 */}
-              <Link
-                href={`/order/${item.id}`}
-                className="flex-1 h-8 flex items-center justify-center bg-sage-400 text-white rounded-lg text-xs font-semibold hover:bg-sage-500 transition-colors"
-              >
-                바로구매
-              </Link>
+            <div className="text-sm font-medium text-sage-400 text-right group-hover:translate-x-0.5 transition-transform">
+              상세보기 →
             </div>
           )}
         </div>
       </div>
     </motion.div>
+  );
+
+  if (item.isConsultation) {
+    return cardContent;
+  }
+
+  return (
+    <Link href={`/menu/${item.id}`} className="block">
+      {cardContent}
+    </Link>
   );
 }
