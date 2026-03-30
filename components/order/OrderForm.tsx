@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { MenuItem, CategoryInfo, formatPrice } from "@/data/menu";
+import CouponPointSection, { type DiscountData } from "./CouponPointSection";
+import { COUPON_POINT_ENABLED } from "@/lib/feature-flags";
+import { calculateOptionPrice, type SelectedOption } from "@/lib/option-utils";
 
 export interface OrderFormData {
   quantity: number;
@@ -12,11 +15,20 @@ export interface OrderFormData {
   pickupDate: string;
   deliveryAddress: string;
   customerMemo: string;
+  // 쿠폰/포인트 할인 정보
+  couponDiscount: number;
+  pointUsed: number;
+  couponId?: string;
+  couponCode?: string;
+  customerId?: string;
+  referralCode?: string;
+  finalAmount: number;
 }
 
 interface OrderFormProps {
   menuItem: MenuItem;
   category: CategoryInfo;
+  selectedOptions?: SelectedOption[];
   onSubmit: (data: OrderFormData) => void;
 }
 
@@ -60,13 +72,13 @@ function Section({
   );
 }
 
-export default function OrderForm({ menuItem, category, onSubmit }: OrderFormProps) {
+export default function OrderForm({ menuItem, category, selectedOptions, onSubmit }: OrderFormProps) {
   const deliveryMethods = category.availableDeliveryMethods ?? ["pickup", "shipping"];
   const supportsPickup = deliveryMethods.includes("pickup");
   const supportsShipping = deliveryMethods.includes("shipping");
   const defaultMethod = supportsPickup ? "pickup" : "shipping";
 
-  const [form, setForm] = useState<OrderFormData>({
+  const [form, setForm] = useState({
     quantity: 1,
     customerName: "",
     customerPhone: "",
@@ -77,6 +89,10 @@ export default function OrderForm({ menuItem, category, onSubmit }: OrderFormPro
     customerMemo: "",
   });
 
+  const [discount, setDiscount] = useState<DiscountData>({
+    couponDiscount: 0,
+    pointUsed: 0,
+  });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -84,9 +100,13 @@ export default function OrderForm({ menuItem, category, onSubmit }: OrderFormPro
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  const totalAmount =
-    menuItem.price * form.quantity +
-    (form.deliveryMethod === "shipping" ? category.defaultShippingFee : 0);
+  const unitPrice = selectedOptions && selectedOptions.length > 0
+    ? calculateOptionPrice(menuItem.price, selectedOptions)
+    : menuItem.price;
+  const itemsTotal = unitPrice * form.quantity;
+  const currentShippingFee = form.deliveryMethod === "shipping" ? category.defaultShippingFee : 0;
+  const totalAmount = itemsTotal + currentShippingFee;
+  const finalAmount = Math.max(0, totalAmount - discount.couponDiscount - discount.pointUsed);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -110,7 +130,16 @@ export default function OrderForm({ menuItem, category, onSubmit }: OrderFormPro
     }
 
     setSubmitting(true);
-    onSubmit(form);
+    onSubmit({
+      ...form,
+      couponDiscount: discount.couponDiscount,
+      pointUsed: discount.pointUsed,
+      couponId: discount.couponId,
+      couponCode: discount.couponCode,
+      customerId: discount.customerId,
+      referralCode: discount.referralCode,
+      finalAmount,
+    });
   }
 
   return (
@@ -124,10 +153,19 @@ export default function OrderForm({ menuItem, category, onSubmit }: OrderFormPro
               <p className="text-xs text-charcoal-100 mt-0.5">{menuItem.nameEn}</p>
             )}
             <p className="text-sm text-charcoal-200 mt-1">{menuItem.description}</p>
+            {selectedOptions && selectedOptions.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {selectedOptions.map((opt) => (
+                  <span key={opt.itemId} className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded font-medium">
+                    {opt.itemName}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           <div className="text-right shrink-0">
             <p className="font-bold text-sage-400 text-lg">
-              {formatPrice(menuItem.price)}
+              {formatPrice(unitPrice)}
             </p>
             <p className="text-xs text-charcoal-100">/ 1개</p>
           </div>
@@ -285,6 +323,16 @@ export default function OrderForm({ menuItem, category, onSubmit }: OrderFormPro
         )}
       </Section>
 
+      {/* 쿠폰 / 포인트 */}
+      {COUPON_POINT_ENABLED && (
+        <CouponPointSection
+          totalAmount={itemsTotal}
+          shippingFee={currentShippingFee}
+          customerPhone={form.customerPhone}
+          onDiscountChange={setDiscount}
+        />
+      )}
+
       {/* 메모 */}
       <Section title="요청사항">
         <Field label="메모" description="특별 요청이 있으시면 남겨주세요 (선택사항)">
@@ -305,7 +353,7 @@ export default function OrderForm({ menuItem, category, onSubmit }: OrderFormPro
             <span>
               {menuItem.name} × {form.quantity}
             </span>
-            <span>{formatPrice(menuItem.price * form.quantity)}</span>
+            <span>{formatPrice(unitPrice * form.quantity)}</span>
           </div>
           {form.deliveryMethod === "shipping" && (
             <div className="flex justify-between text-charcoal-300">
@@ -313,9 +361,21 @@ export default function OrderForm({ menuItem, category, onSubmit }: OrderFormPro
               <span>{formatPrice(category.defaultShippingFee)}</span>
             </div>
           )}
+          {discount.couponDiscount > 0 && (
+            <div className="flex justify-between text-red-400">
+              <span>쿠폰 할인</span>
+              <span>-{formatPrice(discount.couponDiscount)}</span>
+            </div>
+          )}
+          {discount.pointUsed > 0 && (
+            <div className="flex justify-between text-red-400">
+              <span>포인트 사용</span>
+              <span>-{formatPrice(discount.pointUsed)}</span>
+            </div>
+          )}
           <div className="pt-3 border-t border-warm-100 flex justify-between font-bold text-charcoal-400">
-            <span>합계</span>
-            <span className="text-sage-400 text-lg">{formatPrice(totalAmount)}</span>
+            <span>최종 결제 금액</span>
+            <span className="text-sage-400 text-lg">{formatPrice(finalAmount)}</span>
           </div>
         </div>
       </div>

@@ -5,10 +5,13 @@ import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
 import { formatPrice, type CategoryInfo } from "@/data/menu";
 import PaymentWidget from "@/components/order/PaymentWidget";
+import CouponPointSection, { type DiscountData } from "@/components/order/CouponPointSection";
+import { COUPON_POINT_ENABLED } from "@/lib/feature-flags";
 
 interface CreatedOrder {
   orderNumber: string;
   totalAmount: number;
+  finalAmount: number;
   orderName: string;
 }
 
@@ -33,6 +36,10 @@ export default function CartCheckoutPage() {
   const [customerMemo, setCustomerMemo] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [discount, setDiscount] = useState<DiscountData>({
+    couponDiscount: 0,
+    pointUsed: 0,
+  });
 
   // 카테고리 정보 fetch
   useEffect(() => {
@@ -87,6 +94,7 @@ export default function CartCheckoutPage() {
   })();
 
   const grandTotal = totalPrice + shippingFee;
+  const finalAmount = Math.max(0, grandTotal - discount.couponDiscount - discount.pointUsed);
 
   // 장바구니 비어있으면 리다이렉트
   if (items.length === 0 && step === "form") {
@@ -127,6 +135,8 @@ export default function CartCheckoutPage() {
           items: items.map((i) => ({
             menuItemId: i.menuItemId,
             quantity: i.quantity,
+            unitPrice: i.price,
+            selectedOptions: i.selectedOptions,
           })),
           customerName: customerName.trim(),
           customerPhone: customerPhone.replace(/-/g, ""),
@@ -136,6 +146,11 @@ export default function CartCheckoutPage() {
           deliveryAddress: deliveryMethod === "shipping" ? deliveryAddress.trim() : undefined,
           customerMemo: customerMemo.trim() || undefined,
           shippingFee,
+          couponId: discount.couponId,
+          couponCode: discount.couponCode,
+          couponDiscount: discount.couponDiscount,
+          pointUsed: discount.pointUsed,
+          referralCode: discount.referralCode,
         }),
       });
 
@@ -151,6 +166,7 @@ export default function CartCheckoutPage() {
       setCreatedOrder({
         orderNumber: order.orderNumber,
         totalAmount: order.totalAmount,
+        finalAmount: order.finalAmount ?? finalAmount,
         orderName,
       });
       setStep("payment");
@@ -167,7 +183,7 @@ export default function CartCheckoutPage() {
         <div className="max-w-lg mx-auto px-5">
           <h1 className="text-2xl font-bold text-charcoal-400 mb-6">결제</h1>
           <PaymentWidget
-            amount={createdOrder.totalAmount}
+            amount={createdOrder.finalAmount}
             orderNumber={createdOrder.orderNumber}
             orderName={createdOrder.orderName}
             customerName={customerName}
@@ -198,6 +214,15 @@ export default function CartCheckoutPage() {
               <div>
                 <span className="text-sm text-charcoal-400">{item.name}</span>
                 <span className="text-xs text-charcoal-100 ml-2">x {item.quantity}</span>
+                {item.selectedOptions && item.selectedOptions.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {item.selectedOptions.map((opt) => (
+                      <span key={opt.itemId} className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded">
+                        {opt.itemName}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <span className="text-sm font-medium text-charcoal-400">
                 {formatPrice(item.price * item.quantity)}
@@ -364,6 +389,18 @@ export default function CartCheckoutPage() {
           </div>
         </div>
 
+        {/* 쿠폰 / 포인트 */}
+        {COUPON_POINT_ENABLED && (
+          <div className="mb-6">
+            <CouponPointSection
+              totalAmount={totalPrice}
+              shippingFee={shippingFee}
+              customerPhone={customerPhone}
+              onDiscountChange={setDiscount}
+            />
+          </div>
+        )}
+
         {/* 결제 요약 */}
         <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
           <div className="flex justify-between mb-2">
@@ -376,9 +413,21 @@ export default function CartCheckoutPage() {
               <span className="text-sm text-charcoal-400">{formatPrice(shippingFee)}</span>
             </div>
           )}
+          {discount.couponDiscount > 0 && (
+            <div className="flex justify-between mb-2">
+              <span className="text-sm text-charcoal-200">쿠폰 할인</span>
+              <span className="text-sm text-red-400">-{formatPrice(discount.couponDiscount)}</span>
+            </div>
+          )}
+          {discount.pointUsed > 0 && (
+            <div className="flex justify-between mb-2">
+              <span className="text-sm text-charcoal-200">포인트 사용</span>
+              <span className="text-sm text-red-400">-{formatPrice(discount.pointUsed)}</span>
+            </div>
+          )}
           <div className="flex justify-between pt-3 border-t border-gray-200">
-            <span className="font-bold text-lg text-charcoal-400">총 결제금액</span>
-            <span className="font-bold text-lg text-sage-400">{formatPrice(grandTotal)}</span>
+            <span className="font-bold text-lg text-charcoal-400">최종 결제금액</span>
+            <span className="font-bold text-lg text-sage-400">{formatPrice(finalAmount)}</span>
           </div>
         </div>
 
@@ -395,7 +444,7 @@ export default function CartCheckoutPage() {
           disabled={isSubmitting}
           className="w-full py-4 bg-sage-400 text-white rounded-xl font-bold text-base hover:bg-sage-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? "처리 중..." : `${formatPrice(grandTotal)} 결제하기`}
+          {isSubmitting ? "처리 중..." : `${formatPrice(finalAmount)} 결제하기`}
         </button>
       </div>
     </div>

@@ -6,10 +6,13 @@ import Link from "next/link";
 import { MenuItem, CategoryInfo, formatPrice } from "@/data/menu";
 import OrderForm, { OrderFormData } from "@/components/order/OrderForm";
 import PaymentWidget from "@/components/order/PaymentWidget";
+import type { SelectedOption } from "@/lib/option-utils";
+import { calculateOptionPrice, formatSelectedOptions } from "@/lib/option-utils";
 
 interface CreatedOrder {
   orderNumber: string;
   totalAmount: number;
+  finalAmount: number;
   orderName: string;
 }
 
@@ -25,6 +28,7 @@ export default function OrderPage() {
   const [menuItem, setMenuItem] = useState<MenuItem | null>(null);
   const [category, setCategory] = useState<CategoryInfo | null>(null);
   const [createdOrder, setCreatedOrder] = useState<CreatedOrder | null>(null);
+  const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([]);
   const [customerInfo, setCustomerInfo] = useState<{
     name: string;
     email: string;
@@ -88,19 +92,40 @@ export default function OrderPage() {
     fetchData();
   }, [menuItemId]);
 
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem("direct-order-options");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.menuItemId === menuItemId) {
+          setSelectedOptions(parsed.options);
+        }
+        sessionStorage.removeItem("direct-order-options");
+      }
+    } catch { /* ignore */ }
+  }, [menuItemId]);
+
   async function handleOrderSubmit(formData: OrderFormData) {
     if (!menuItem || !category) return;
 
     const shippingFee =
       formData.deliveryMethod === "shipping" ? category.defaultShippingFee : 0;
 
+    const unitPrice = selectedOptions.length > 0
+      ? calculateOptionPrice(menuItem.price, selectedOptions)
+      : menuItem.price;
+
     try {
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          menuItemId: menuItem.id,
-          quantity: formData.quantity,
+          items: [{
+            menuItemId: menuItem.id,
+            quantity: formData.quantity,
+            unitPrice,
+            selectedOptions: selectedOptions.length > 0 ? selectedOptions : undefined,
+          }],
           customerName: formData.customerName,
           customerPhone: formData.customerPhone,
           customerEmail: formData.customerEmail,
@@ -109,6 +134,11 @@ export default function OrderPage() {
           pickupDate: formData.pickupDate,
           customerMemo: formData.customerMemo,
           shippingFee,
+          couponId: formData.couponId,
+          couponCode: formData.couponCode,
+          couponDiscount: formData.couponDiscount,
+          pointUsed: formData.pointUsed,
+          referralCode: formData.referralCode,
         }),
       });
 
@@ -120,13 +150,16 @@ export default function OrderPage() {
       const data = await res.json();
       const order = data.order;
 
-      const totalAmount =
-        menuItem.price * formData.quantity + shippingFee;
+      const totalAmount = unitPrice * formData.quantity + shippingFee;
+      const optionSuffix = selectedOptions.length > 0
+        ? ` (${formatSelectedOptions(selectedOptions)})`
+        : "";
 
       setCreatedOrder({
         orderNumber: order.orderNumber,
         totalAmount: order.totalAmount ?? totalAmount,
-        orderName: `${menuItem.name} × ${formData.quantity}`,
+        finalAmount: order.finalAmount ?? formData.finalAmount ?? totalAmount,
+        orderName: `${menuItem.name}${optionSuffix} × ${formData.quantity}`,
       });
       setCustomerInfo({
         name: formData.customerName,
@@ -202,7 +235,11 @@ export default function OrderPage() {
                 {category?.emoji} {menuItem?.name}
                 {menuItem?.price !== undefined && (
                   <span className="ml-2 text-sage-400 font-semibold">
-                    {formatPrice(menuItem.price)}
+                    {formatPrice(
+                      selectedOptions.length > 0
+                        ? calculateOptionPrice(menuItem.price, selectedOptions)
+                        : menuItem.price
+                    )}
                   </span>
                 )}
               </p>
@@ -265,13 +302,14 @@ export default function OrderPage() {
           <OrderForm
             menuItem={menuItem}
             category={category}
+            selectedOptions={selectedOptions}
             onSubmit={handleOrderSubmit}
           />
         )}
 
         {step === "payment" && createdOrder && (
           <PaymentWidget
-            amount={createdOrder.totalAmount}
+            amount={createdOrder.finalAmount}
             orderNumber={createdOrder.orderNumber}
             orderName={createdOrder.orderName}
             customerName={customerInfo?.name}

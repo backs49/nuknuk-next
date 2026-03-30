@@ -182,7 +182,27 @@ export default function OrderDetail({ orderId }: OrderDetailProps) {
             <tbody>
               {order.items.map((item) => (
                 <tr key={item.id} className="border-b border-warm-50">
-                  <td className="py-3 text-charcoal-400">{item.name}</td>
+                  <td className="py-3 text-charcoal-400">
+                    {item.name}
+                    {item.selectedOptions && item.selectedOptions.length > 0 && (
+                      <>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {item.selectedOptions.map((opt) => (
+                            <span key={opt.itemId} className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded font-medium">
+                              {opt.itemName}
+                            </span>
+                          ))}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {item.selectedOptions.map((o) =>
+                            o.priceMode === "fixed"
+                              ? `${o.groupName}: ${o.itemName} (${o.price.toLocaleString()}원)`
+                              : `${o.groupName}: ${o.itemName} (+${o.price.toLocaleString()}원)`
+                          ).join(" · ")}
+                        </p>
+                      </>
+                    )}
+                  </td>
                   <td className="py-3 text-center text-charcoal-300">{item.quantity}</td>
                   <td className="py-3 text-right text-charcoal-300">
                     {formatOrderPrice(item.unitPrice)}

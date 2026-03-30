@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import type { Order } from "@/data/order";
+import { formatSelectedOptions } from "@/lib/option-utils";
 
 // ========== 전화번호 정규화 ==========
 
@@ -13,8 +14,12 @@ function normalizePhone(phone: string): string {
 
 function buildOrderName(items: Order["items"]): string {
   if (items.length === 0) return "주문 상품";
-  if (items.length === 1) return items[0].name;
-  return `${items[0].name} 외 ${items.length - 1}건`;
+  const firstName = items[0].name +
+    (items[0].selectedOptions?.length
+      ? ` (${formatSelectedOptions(items[0].selectedOptions)})`
+      : "");
+  if (items.length === 1) return firstName;
+  return `${firstName} 외 ${items.length - 1}건`;
 }
 
 // ========== 솔라피 HMAC-SHA256 인증 ==========
@@ -31,7 +36,7 @@ function buildSolapiAuth(apiKey: string, apiSecret: string): string {
 
 // ========== 메인 함수 ==========
 
-export async function sendKakaoAlimtalk(order: Order): Promise<void> {
+export async function sendKakaoAlimtalk(order: Order, referralCode?: string): Promise<void> {
   // 1. 활성화 여부 확인
   if (process.env.KAKAO_ALIMTALK_ENABLED !== "true") {
     console.log("카카오 알림톡 비활성화 상태 — 발송 건너뜀");
@@ -77,6 +82,9 @@ export async function sendKakaoAlimtalk(order: Order): Promise<void> {
   }
   if (order.deliveryMethod === "shipping" && order.deliveryAddress) {
     variables.deliveryAddress = order.deliveryAddress;
+  }
+  if (referralCode) {
+    variables.referralCode = referralCode;
   }
 
   // 6. 솔라피 API 호출
