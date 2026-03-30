@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import Image from "next/image";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import MenuImageManager from "./MenuImageManager";
 
 const ALLERGENS = [
   { value: "gluten", label: "밀" },
@@ -36,7 +36,6 @@ interface MenuFormProps {
 
 export default function MenuForm({ initialData, mode }: MenuFormProps) {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [categories, setCategories] = useState<
     { value: string; label: string }[]
   >([]);
@@ -58,6 +57,21 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
       });
   }, []);
 
+  useEffect(() => {
+    if (mode === "edit" && initialData?.id) {
+      fetch(`/api/admin/menu/${initialData.id}/images`)
+        .then((res) => (res.ok ? res.json() : []))
+        .then((data: { id: string; imageUrl: string; sortOrder: number }[]) => {
+          if (Array.isArray(data) && data.length > 0) {
+            setImages(data.map((img, idx) => ({ imageUrl: img.imageUrl, sortOrder: idx })));
+          }
+        })
+        .catch(() => {
+          // silently ignore — images just start empty
+        });
+    }
+  }, [mode, initialData?.id]);
+
   const [form, setForm] = useState<MenuFormData>({
     id: initialData?.id || "",
     name: initialData?.name || "",
@@ -74,7 +88,7 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
     sort_order: initialData?.sort_order || 0,
   });
 
-  const [uploading, setUploading] = useState(false);
+  const [images, setImages] = useState<{ imageUrl: string; sortOrder: number }[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -92,36 +106,6 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
         ? prev.allergens.filter((a) => a !== allergen)
         : [...prev.allergens, allergen],
     }));
-  }
-
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    setError("");
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "업로드 실패");
-      }
-
-      const { url } = await res.json();
-      updateField("image", url);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "이미지 업로드 실패");
-    } finally {
-      setUploading(false);
-    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -162,6 +146,15 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "저장 실패");
+      }
+
+      // Save multi-images for edit mode
+      if (mode === "edit" && initialData?.id && images.length > 0) {
+        await fetch(`/api/admin/menu/${initialData.id}/images`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ images }),
+        });
       }
 
       router.push("/admin/menu");
@@ -261,60 +254,13 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
         </Field>
       </Section>
 
-      {/* 제품 사진 */}
-      <Section title="제품 사진">
-        <div className="flex items-start gap-6">
-          {/* 프리뷰 */}
-          <div
-            className="w-40 h-32 rounded-xl overflow-hidden bg-cream-200 flex items-center justify-center cursor-pointer border-2 border-dashed border-warm-300 hover:border-sage-400 transition shrink-0"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {form.image ? (
-              <Image
-                src={form.image}
-                alt="메뉴 사진"
-                width={160}
-                height={128}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="text-center text-charcoal-200">
-                <p className="text-2xl mb-1">📷</p>
-                <p className="text-xs">클릭하여 업로드</p>
-              </div>
-            )}
-          </div>
-
-          <div className="flex-1">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="px-4 py-2 text-sm bg-gray-100 text-charcoal-300 rounded-lg hover:bg-gray-200 transition disabled:opacity-50"
-            >
-              {uploading ? "업로드 중..." : "파일 선택"}
-            </button>
-            <p className="text-xs text-charcoal-100 mt-2">
-              JPG, PNG, WebP / 최대 10MB
-            </p>
-            {form.image && (
-              <button
-                type="button"
-                onClick={() => updateField("image", "")}
-                className="text-xs text-red-500 mt-1 hover:underline"
-              >
-                사진 제거
-              </button>
-            )}
-          </div>
-        </div>
+      {/* 상품 이미지 */}
+      <Section title="상품 이미지">
+        <MenuImageManager
+          menuItemId={form.id || initialData?.id || ""}
+          initialImages={[]}
+          onImagesChange={setImages}
+        />
       </Section>
 
       {/* 알레르기 정보 */}

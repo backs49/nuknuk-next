@@ -28,8 +28,7 @@ export async function PUT(
 }
 
 export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } }
+  req: NextRequest
 ) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
