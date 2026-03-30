@@ -57,12 +57,12 @@ export default function CTASection() {
               장바구니 보기
             </button>
             <a
-              href="https://naver.me/xOxTmNiu"
+              href="http://pf.kakao.com/_paCxdn"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-full bg-white/20 backdrop-blur text-white font-bold text-base border border-white/30 hover:bg-white/30 active:scale-95 transition-all duration-300"
             >
-              네이버 예약
+              카카오톡 예약
             </a>
           </div>
         </FadeIn>

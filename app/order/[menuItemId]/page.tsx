@@ -322,12 +322,12 @@ export default function OrderPage() {
         <p className="text-center text-xs text-charcoal-100 pb-8">
           주문 관련 문의:{" "}
           <a
-            href="https://www.instagram.com/nuknuk_dessert"
+            href="http://pf.kakao.com/_paCxdn"
             target="_blank"
             rel="noopener noreferrer"
             className="text-sage-400 hover:underline"
           >
-            @nuknuk_dessert
+            카카오톡 채널
           </a>
         </p>
       </div>

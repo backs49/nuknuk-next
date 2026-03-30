@@ -180,12 +180,12 @@ export default function MenuCard({ item, index }: MenuCardProps) {
           {item.isConsultation ? (
             /* 상담 상품 */
             <a
-              href="https://www.instagram.com/nuknuk_dessert/"
+              href="http://pf.kakao.com/_paCxdn"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 w-full py-2.5 bg-blush-400 text-white rounded-lg text-sm font-medium hover:bg-blush-500 transition-colors"
+              className="flex items-center justify-center gap-1.5 w-full py-2.5 bg-[#FEE500] text-charcoal-400 rounded-lg text-sm font-medium hover:brightness-95 transition-colors"
             >
-              💬 상담하기 (Instagram DM)
+              💬 상담하기 (카카오톡 채널)
             </a>
           ) : (
             /* 일반 상품 */

@@ -47,12 +47,13 @@ export default function Footer() {
               >
                 📸 @nuknuk_dessert
               </a>
-              {/* TODO: 네이버 예약 실제 링크로 교체 */}
               <a
-                href="#"
+                href="http://pf.kakao.com/_paCxdn"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="block hover:text-white transition-colors"
               >
-                🗓 네이버 예약
+                💬 카카오톡 채널
               </a>
             </div>
           </div>

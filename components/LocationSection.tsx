@@ -130,27 +130,33 @@ export default function LocationSection() {
                     </span>
                     로 운영됩니다.
                     <br />
-                    최소 2일 전 Instagram DM 또는 네이버로 예약해 주세요.
+                    최소 2일 전 카카오톡 채널로 예약해 주세요.
                   </p>
+                </div>
+              </div>
+
+              {/* 전화번호 */}
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-sage-100 flex items-center justify-center text-xl">
+                  📞
+                </div>
+                <div>
+                  <h3 className="font-bold text-charcoal-400 mb-1">전화 문의</h3>
+                  <a href="tel:0507-1328-3934" className="text-charcoal-200 hover:text-sage-400 transition-colors">
+                    0507.1328.3934
+                  </a>
                 </div>
               </div>
 
               {/* 예약 버튼 */}
               <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 <a
-                  href="https://www.instagram.com/nuknuk_dessert/"
+                  href="http://pf.kakao.com/_paCxdn"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-primary text-sm flex-1"
                 >
-                  📩 Instagram DM 예약
-                </a>
-                {/* TODO: 네이버 예약 링크를 실제 URL로 교체하세요 */}
-                <a
-                  href="#"
-                  className="btn-secondary text-sm flex-1"
-                >
-                  🗓 네이버 예약
+                  💬 카카오톡 예약
                 </a>
               </div>
             </div>
