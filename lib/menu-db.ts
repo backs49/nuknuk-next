@@ -158,7 +158,11 @@ export interface DbMenuItem {
 }
 
 // DB 데이터를 프론트엔드 MenuItem 형식으로 변환
-export function toMenuItem(db: DbMenuItem): MenuItem {
+export function toMenuItem(
+  db: DbMenuItem,
+  images?: { id: string; image_url: string; sort_order: number }[],
+  hasOptions?: boolean
+): MenuItem {
   return {
     id: db.id,
     name: db.name,
@@ -172,6 +176,12 @@ export function toMenuItem(db: DbMenuItem): MenuItem {
     isNew: db.is_new,
     isConsultation: db.is_consultation,
     hidePrice: db.hide_price,
+    images: images?.map((img) => ({
+      id: img.id,
+      imageUrl: img.image_url,
+      sortOrder: img.sort_order,
+    })),
+    hasOptions,
   };
 }
 
@@ -209,13 +219,20 @@ export async function getMenuItems(): Promise<MenuItem[]> {
 
     const { data, error } = await supabase
       .from("menu_items")
-      .select("*")
+      .select("*, menu_item_images(*), menu_option_groups(id)")
       .order("sort_order", { ascending: true });
 
     if (error) throw error;
     if (!data || data.length === 0) return staticMenuItems;
 
-    return data.map(toMenuItem);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return data.map((item: any) =>
+      toMenuItem(
+        item as DbMenuItem,
+        item.menu_item_images,
+        Array.isArray(item.menu_option_groups) && item.menu_option_groups.length > 0
+      )
+    );
   } catch {
     console.warn("Supabase 연결 실패, 정적 데이터 사용");
     return staticMenuItems;
