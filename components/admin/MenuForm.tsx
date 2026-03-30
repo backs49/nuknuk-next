@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import MenuImageManager from "./MenuImageManager";
+import DetailBlockEditor from "./DetailBlockEditor";
 
 const ALLERGENS = [
   { value: "gluten", label: "밀" },
@@ -89,6 +90,7 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
   });
 
   const [images, setImages] = useState<{ imageUrl: string; sortOrder: number }[]>([]);
+  const [blocks, setBlocks] = useState<{ type: "text" | "image"; content: string; sortOrder: number }[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -154,6 +156,15 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ images }),
+        });
+      }
+
+      // Save detail blocks for edit mode
+      if (mode === "edit" && initialData?.id) {
+        await fetch(`/api/admin/menu/${initialData.id}/detail-blocks`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ blocks }),
         });
       }
 
@@ -332,6 +343,14 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
             </label>
           )}
         </div>
+      </Section>
+
+      {/* 상세 설명 */}
+      <Section title="상세 설명">
+        <DetailBlockEditor
+          menuItemId={form.id || initialData?.id || ""}
+          onBlocksChange={setBlocks}
+        />
       </Section>
 
       {/* 에러 메시지 */}
