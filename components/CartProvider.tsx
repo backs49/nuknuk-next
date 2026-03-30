@@ -1,21 +1,25 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import type { SelectedOption } from "@/lib/option-utils";
+import { getOptionKey } from "@/lib/option-utils";
 
 export interface CartItem {
   menuItemId: string;
   name: string;
-  price: number;
+  price: number;        // 옵션 포함 최종 단가
   quantity: number;
   image?: string;
   category: string;
+  selectedOptions?: SelectedOption[];  // NEW
+  optionKey?: string;                  // NEW — for deduplication
 }
 
 interface CartContextType {
   items: CartItem[];
   addItem: (item: CartItem) => void;
-  removeItem: (menuItemId: string) => void;
-  updateQuantity: (menuItemId: string, quantity: number) => void;
+  removeItem: (menuItemId: string, optionKey?: string) => void;
+  updateQuantity: (menuItemId: string, quantity: number, optionKey?: string) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
@@ -78,28 +82,37 @@ export default function CartProvider({ children }: { children: ReactNode }) {
   }, [items, hydrated]);
 
   const addItem = useCallback((newItem: CartItem) => {
+    const newKey = newItem.optionKey || getOptionKey(newItem.selectedOptions ?? []);
     setItems((prev) => {
-      const existing = prev.find((i) => i.menuItemId === newItem.menuItemId);
+      const existing = prev.find(
+        (i) => i.menuItemId === newItem.menuItemId && (i.optionKey || "") === newKey
+      );
       if (existing) {
         return prev.map((i) =>
-          i.menuItemId === newItem.menuItemId
+          i.menuItemId === newItem.menuItemId && (i.optionKey || "") === newKey
             ? { ...i, quantity: Math.min(i.quantity + newItem.quantity, 99) }
             : i
         );
       }
-      return [...prev, { ...newItem, quantity: Math.min(newItem.quantity, 99) }];
+      return [...prev, { ...newItem, optionKey: newKey, quantity: Math.min(newItem.quantity, 99) }];
     });
   }, []);
 
-  const removeItem = useCallback((menuItemId: string) => {
-    setItems((prev) => prev.filter((i) => i.menuItemId !== menuItemId));
+  const removeItem = useCallback((menuItemId: string, optionKey?: string) => {
+    setItems((prev) =>
+      prev.filter((i) => !(i.menuItemId === menuItemId && (i.optionKey || "") === (optionKey || "")))
+    );
   }, []);
 
-  const updateQuantity = useCallback((menuItemId: string, quantity: number) => {
+  const updateQuantity = useCallback((menuItemId: string, quantity: number, optionKey?: string) => {
     if (quantity < 1) return;
     const clamped = Math.min(quantity, 99);
     setItems((prev) =>
-      prev.map((i) => (i.menuItemId === menuItemId ? { ...i, quantity: clamped } : i))
+      prev.map((i) =>
+        i.menuItemId === menuItemId && (i.optionKey || "") === (optionKey || "")
+          ? { ...i, quantity: clamped }
+          : i
+      )
     );
   }, []);
 

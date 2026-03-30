@@ -110,16 +110,25 @@ export default function CartSlidePanel() {
                 </div>
               ) : (
                 items.map((item) => (
-                  <div key={item.menuItemId} className="py-3 border-b border-gray-50 last:border-0">
+                  <div key={`${item.menuItemId}-${item.optionKey || ""}`} className="py-3 border-b border-gray-50 last:border-0">
                     <div className="flex justify-between mb-2">
                       <div>
                         <p className="font-semibold text-sm text-charcoal-400">{item.name}</p>
                         <p className="text-xs text-charcoal-100 mt-0.5">
                           {formatPrice(item.price)} / 개
                         </p>
+                        {item.selectedOptions && item.selectedOptions.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {item.selectedOptions.map((opt) => (
+                              <span key={opt.itemId} className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded">
+                                {opt.itemName}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <button
-                        onClick={() => removeItem(item.menuItemId)}
+                        onClick={() => removeItem(item.menuItemId, item.optionKey)}
                         className="text-gray-300 hover:text-red-400 text-sm"
                         aria-label={`${item.name} 삭제`}
                       >
@@ -131,9 +140,9 @@ export default function CartSlidePanel() {
                         quantity={item.quantity}
                         onChange={(q) => {
                           if (q < 1) {
-                            removeItem(item.menuItemId);
+                            removeItem(item.menuItemId, item.optionKey);
                           } else {
-                            updateQuantity(item.menuItemId, q);
+                            updateQuantity(item.menuItemId, q, item.optionKey);
                           }
                         }}
                       />
