@@ -1,5 +1,5 @@
 // lib/order-db.ts
-import { getServiceSupabase } from "./supabase";
+import { getSupabaseOrThrow } from "./db-utils";
 import {
   type DbOrder,
   type DbOrderItem,
@@ -8,12 +8,6 @@ import {
   type Order,
   toOrder,
 } from "@/data/order";
-
-function getSupabaseOrThrow() {
-  const supabase = getServiceSupabase();
-  if (!supabase) throw new Error("Supabase가 설정되지 않았습니다");
-  return supabase;
-}
 
 // 주문 생성
 export async function createOrder(input: CreateOrderInput): Promise<Order> {
@@ -25,6 +19,10 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
   );
   const shippingFee = input.shippingFee || 0;
   const totalAmount = itemsTotal + shippingFee;
+
+  const couponDiscount = input.couponDiscount || 0;
+  const pointUsed = input.pointUsed || 0;
+  const finalAmount = input.finalAmount ?? (totalAmount - couponDiscount - pointUsed);
 
   const { data: order, error: orderError } = await supabase
     .from("orders")
@@ -41,6 +39,13 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
       pickup_date: input.pickupDate || null,
       total_amount: totalAmount,
       shipping_fee: shippingFee,
+      customer_id: input.customerId || null,
+      coupon_id: input.couponId || null,
+      coupon_code: input.couponCode || null,
+      coupon_discount: couponDiscount,
+      point_used: pointUsed,
+      point_earned: input.pointEarned || 0,
+      final_amount: finalAmount,
     })
     .select()
     .single();
@@ -54,6 +59,7 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
     quantity: item.quantity,
     unit_price: item.unitPrice,
     subtotal: item.quantity * item.unitPrice,
+    selected_options: item.selectedOptions ? JSON.stringify(item.selectedOptions) : null,
   }));
 
   const { data: items, error: itemsError } = await supabase
