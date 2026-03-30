@@ -180,9 +180,9 @@ export default function CategoriesPage() {
   return (
     <div>
       {/* 헤더 */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between gap-3 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-charcoal-400">
+          <h1 className="text-xl sm:text-2xl font-bold text-charcoal-400">
             카테고리 관리
           </h1>
           <p className="text-sm text-charcoal-200 mt-1">
@@ -192,7 +192,7 @@ export default function CategoriesPage() {
         {!showForm && (
           <button
             onClick={startCreate}
-            className="px-5 py-2.5 bg-sage-400 text-white text-sm font-medium rounded-lg hover:bg-sage-500 transition"
+            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-sage-400 text-white text-sm font-medium rounded-lg hover:bg-sage-500 transition whitespace-nowrap"
           >
             + 새 카테고리 추가
           </button>
@@ -201,7 +201,7 @@ export default function CategoriesPage() {
 
       {/* 추가/수정 폼 */}
       {showForm && (
-        <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
+        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm mb-6">
           <h2 className="text-lg font-semibold text-charcoal-400 mb-4">
             {editingId ? "카테고리 수정" : "새 카테고리 추가"}
           </h2>
@@ -395,98 +395,100 @@ export default function CategoriesPage() {
         <p className="text-charcoal-200">로딩 중...</p>
       ) : (
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-100">
-                <th className="text-left text-xs font-medium text-charcoal-200 uppercase tracking-wider px-6 py-4">
-                  순서
-                </th>
-                <th className="text-left text-xs font-medium text-charcoal-200 uppercase tracking-wider px-6 py-4">
-                  카테고리
-                </th>
-                <th className="text-left text-xs font-medium text-charcoal-200 uppercase tracking-wider px-6 py-4">
-                  ID
-                </th>
-                <th className="text-left text-xs font-medium text-charcoal-200 uppercase tracking-wider px-6 py-4">
-                  영문명
-                </th>
-                <th className="text-left text-xs font-medium text-charcoal-200 uppercase tracking-wider px-6 py-4">
-                  수령 방식
-                </th>
-                <th className="text-right text-xs font-medium text-charcoal-200 uppercase tracking-wider px-6 py-4">
-                  관리
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {categories.map((cat) => (
-                <tr
-                  key={cat.id}
-                  className="border-b border-gray-50 hover:bg-gray-50/50 transition"
-                >
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-charcoal-200">
-                      {cat.sort_order}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="font-medium text-charcoal-400">
-                      {cat.emoji} {cat.name}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <code className="text-xs text-charcoal-200 bg-gray-100 px-2 py-1 rounded">
-                      {cat.id}
-                    </code>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-charcoal-200">
-                      {cat.name_en || "-"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-1.5">
-                      {(cat.available_delivery_methods ?? ["pickup"]).map((m) => (
-                        <span
-                          key={m}
-                          className={`text-xs px-2 py-0.5 rounded-full ${
-                            m === "pickup"
-                              ? "bg-sage-400/10 text-sage-400"
-                              : "bg-blue-50 text-blue-500"
-                          }`}
-                        >
-                          {m === "pickup" ? "픽업" : "택배"}
-                        </span>
-                      ))}
-                      {(cat.available_delivery_methods ?? []).includes("shipping") &&
-                        cat.default_shipping_fee > 0 && (
-                          <span className="text-xs text-charcoal-100">
-                            ({cat.default_shipping_fee.toLocaleString()}원)
-                          </span>
-                        )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => startEdit(cat)}
-                        className="px-3 py-1.5 text-xs text-charcoal-300 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
-                      >
-                        수정
-                      </button>
-                      <button
-                        onClick={() => handleDelete(cat)}
-                        disabled={deleting === cat.id}
-                        className="px-3 py-1.5 text-xs text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition disabled:opacity-50"
-                      >
-                        {deleting === cat.id ? "..." : "삭제"}
-                      </button>
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[600px]">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="text-left text-xs font-medium text-charcoal-200 uppercase tracking-wider px-4 sm:px-6 py-3 sm:py-4">
+                    순서
+                  </th>
+                  <th className="text-left text-xs font-medium text-charcoal-200 uppercase tracking-wider px-4 sm:px-6 py-3 sm:py-4">
+                    카테고리
+                  </th>
+                  <th className="text-left text-xs font-medium text-charcoal-200 uppercase tracking-wider px-4 sm:px-6 py-3 sm:py-4">
+                    ID
+                  </th>
+                  <th className="text-left text-xs font-medium text-charcoal-200 uppercase tracking-wider px-4 sm:px-6 py-3 sm:py-4 hidden sm:table-cell">
+                    영문명
+                  </th>
+                  <th className="text-left text-xs font-medium text-charcoal-200 uppercase tracking-wider px-4 sm:px-6 py-3 sm:py-4">
+                    수령 방식
+                  </th>
+                  <th className="text-right text-xs font-medium text-charcoal-200 uppercase tracking-wider px-4 sm:px-6 py-3 sm:py-4">
+                    관리
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {categories.map((cat) => (
+                  <tr
+                    key={cat.id}
+                    className="border-b border-gray-50 hover:bg-gray-50/50 transition"
+                  >
+                    <td className="px-4 sm:px-6 py-3 sm:py-4">
+                      <span className="text-sm text-charcoal-200">
+                        {cat.sort_order}
+                      </span>
+                    </td>
+                    <td className="px-4 sm:px-6 py-3 sm:py-4">
+                      <span className="font-medium text-charcoal-400">
+                        {cat.emoji} {cat.name}
+                      </span>
+                    </td>
+                    <td className="px-4 sm:px-6 py-3 sm:py-4">
+                      <code className="text-xs text-charcoal-200 bg-gray-100 px-2 py-1 rounded">
+                        {cat.id}
+                      </code>
+                    </td>
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 hidden sm:table-cell">
+                      <span className="text-sm text-charcoal-200">
+                        {cat.name_en || "-"}
+                      </span>
+                    </td>
+                    <td className="px-4 sm:px-6 py-3 sm:py-4">
+                      <div className="flex flex-wrap gap-1.5">
+                        {(cat.available_delivery_methods ?? ["pickup"]).map((m) => (
+                          <span
+                            key={m}
+                            className={`text-xs px-2 py-0.5 rounded-full ${
+                              m === "pickup"
+                                ? "bg-sage-400/10 text-sage-400"
+                                : "bg-blue-50 text-blue-500"
+                            }`}
+                          >
+                            {m === "pickup" ? "픽업" : "택배"}
+                          </span>
+                        ))}
+                        {(cat.available_delivery_methods ?? []).includes("shipping") &&
+                          cat.default_shipping_fee > 0 && (
+                            <span className="text-xs text-charcoal-100">
+                              ({cat.default_shipping_fee.toLocaleString()}원)
+                            </span>
+                          )}
+                      </div>
+                    </td>
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => startEdit(cat)}
+                          className="px-3 py-1.5 text-xs text-charcoal-300 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+                        >
+                          수정
+                        </button>
+                        <button
+                          onClick={() => handleDelete(cat)}
+                          disabled={deleting === cat.id}
+                          className="px-3 py-1.5 text-xs text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition disabled:opacity-50"
+                        >
+                          {deleting === cat.id ? "..." : "삭제"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {categories.length === 0 && (
             <div className="text-center py-12 text-charcoal-200">

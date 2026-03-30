@@ -27,7 +27,7 @@ export default function PaymentWidget({
     PaymentWidgetInstance["renderPaymentMethods"]
   > | null>(null);
 
-  const [isReady, setIsReady] = useState(false);
+  const [isReady, setIsReady] = useState(amount === 0);
   const [customerKey, setCustomerKey] = useState("");
   const [isRequesting, setIsRequesting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -38,7 +38,7 @@ export default function PaymentWidget({
   }, []);
 
   useEffect(() => {
-    if (!customerKey) return;
+    if (!customerKey || amount === 0) return;
 
     (async () => {
       const { loadPaymentWidget } = await import("@tosspayments/payment-widget-sdk");
@@ -67,7 +67,32 @@ export default function PaymentWidget({
     paymentMethodsWidget.updateAmount(amount);
   }, [amount]);
 
+  // 0원 결제 처리 (포인트/쿠폰 전액 할인)
+  const handleZeroPayment = async () => {
+    setIsRequesting(true);
+    setErrorMessage("");
+    try {
+      const res = await fetch("/api/payments/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentKey: "point-only", orderId: orderNumber, amount: 0 }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        window.location.href = `/pay/success?orderId=${orderNumber}&amount=0`;
+      } else {
+        setErrorMessage(data.message || "결제 처리에 실패했습니다");
+        setIsRequesting(false);
+      }
+    } catch {
+      setErrorMessage("결제 처리 중 오류가 발생했습니다");
+      setIsRequesting(false);
+    }
+  };
+
   const handlePayment = async () => {
+    if (amount === 0) return handleZeroPayment();
+
     const paymentWidget = paymentWidgetRef.current;
     if (!paymentWidget) return;
 
@@ -115,8 +140,21 @@ export default function PaymentWidget({
       </div>
 
       {/* 토스 결제 위젯 마운트 영역 */}
-      <div id="payment-widget" />
-      <div id="agreement" />
+      {amount === 0 ? (
+        <div className="text-center py-6">
+          <p className="text-charcoal-300 font-medium">
+            포인트/쿠폰으로 전액 결제됩니다
+          </p>
+          <p className="text-sm text-charcoal-200 mt-1">
+            추가 결제 없이 주문이 확정됩니다
+          </p>
+        </div>
+      ) : (
+        <>
+          <div id="payment-widget" />
+          <div id="agreement" />
+        </>
+      )}
 
       {errorMessage && (
         <div className="mt-4 p-4 rounded-xl bg-red-50 text-red-500 text-sm font-medium border border-red-100 flex items-center gap-2">
@@ -148,9 +186,9 @@ export default function PaymentWidget({
         }`}
       >
         {isRequesting
-          ? "결제창을 띄우는 중..."
+          ? amount === 0 ? "주문 처리 중..." : "결제창을 띄우는 중..."
           : isReady
-          ? `${amount.toLocaleString()}원 결제하기`
+          ? amount === 0 ? "주문 확정하기" : `${amount.toLocaleString()}원 결제하기`
           : "결제 모듈 로딩 중..."}
       </button>
     </div>

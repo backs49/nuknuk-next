@@ -2,8 +2,9 @@
 
 import { SessionProvider, useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { COUPON_POINT_ENABLED } from "@/lib/feature-flags";
 
 // 인증이 필요 없는 경로
 const PUBLIC_PATHS = ["/admin/login"];
@@ -31,12 +32,18 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/admin/login");
     }
   }, [status, router]);
+
+  // 페이지 이동 시 모바일 사이드바 닫기
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
 
   if (status === "loading") {
     return (
@@ -53,12 +60,54 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     { href: "/admin/orders", label: "주문 관리", icon: "🧾" },
     { href: "/admin/menu", label: "메뉴 관리", icon: "🍡" },
     { href: "/admin/categories", label: "카테고리 관리", icon: "📂" },
+    ...(COUPON_POINT_ENABLED
+      ? [
+          { href: "/admin/customers", label: "고객 관리", icon: "👥" },
+          { href: "/admin/coupons", label: "쿠폰 관리", icon: "🎟️" },
+          { href: "/admin/points", label: "포인트 현황", icon: "💰" },
+          { href: "/admin/settings", label: "운영 설정", icon: "⚙️" },
+        ]
+      : []),
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 md:flex">
+      {/* 모바일 헤더 */}
+      <div className="md:hidden sticky top-0 z-40 bg-charcoal-400 text-white flex items-center justify-between px-4 py-3">
+        <Link href="/admin" className="font-bold">넉넉 관리자</Link>
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 transition"
+        >
+          {sidebarOpen ? (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </button>
+      </div>
+
+      {/* 모바일 오버레이 */}
+      {sidebarOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/50"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* 사이드바 */}
-      <aside className="w-64 bg-charcoal-400 text-white flex flex-col shrink-0 fixed inset-y-0 left-0 z-30">
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-50 w-64 bg-charcoal-400 text-white flex flex-col shrink-0
+          transition-transform duration-200 ease-in-out
+          md:sticky md:top-0 md:h-screen md:translate-x-0
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        `}
+      >
         <div className="p-6 border-b border-charcoal-300">
           <Link href="/admin" className="block">
             <h1 className="text-lg font-bold">넉넉 디저트</h1>
@@ -66,7 +115,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
 
-        <nav className="flex-1 py-4">
+        <nav className="flex-1 py-4 overflow-y-auto">
           {navItems.map((item) => {
             const isActive =
               item.href === "/admin"
@@ -112,7 +161,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* 메인 콘텐츠 */}
-      <main className="flex-1 ml-64 p-8">{children}</main>
+      <main className="flex-1 min-w-0 p-4 sm:p-6 md:p-8">{children}</main>
     </div>
   );
 }

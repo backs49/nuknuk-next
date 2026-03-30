@@ -75,7 +75,7 @@ export default function ImageGallery({
     const icon = categoryIcons[category ?? ""] ?? "\u{1F361}";
 
     return (
-      <div className="relative aspect-[4/3] w-full">
+      <div className="relative aspect-[4/3] lg:aspect-square w-full">
         <div
           className={`absolute inset-0 bg-gradient-to-br ${gradient} flex items-center justify-center`}
         >
@@ -89,7 +89,7 @@ export default function ImageGallery({
     <div className="relative w-full">
       {/* Image container */}
       <div
-        className="relative aspect-[4/3] overflow-hidden"
+        className="relative aspect-[4/3] lg:aspect-square overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -99,7 +99,7 @@ export default function ImageGallery({
           alt={`${menuName} ${currentIndex + 1}`}
           fill
           className="object-cover"
-          sizes="100vw"
+          sizes="(min-width: 1024px) 50vw, 100vw"
           priority={currentIndex === 0}
         />
 

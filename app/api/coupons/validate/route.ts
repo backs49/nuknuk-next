@@ -1,0 +1,36 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { validateCouponCode, calculateCouponDiscount } from '@/lib/coupon-db'
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { code, totalAmount, shippingFee } = body
+
+    if (!code) {
+      return NextResponse.json({ valid: false, reason: '쿠폰 코드를 입력해주세요' })
+    }
+
+    const template = await validateCouponCode(code)
+    if (!template) {
+      return NextResponse.json({ valid: false, reason: '유효하지 않은 쿠폰 코드입니다' })
+    }
+
+    if (template.minOrderAmount > 0 && totalAmount < template.minOrderAmount) {
+      return NextResponse.json({
+        valid: false,
+        reason: `최소 주문 금액 ${template.minOrderAmount.toLocaleString()}원 이상이어야 합니다`,
+      })
+    }
+
+    const discount = calculateCouponDiscount(template, totalAmount || 0, shippingFee || 0)
+
+    return NextResponse.json({
+      valid: true,
+      template,
+      discount,
+    })
+  } catch (error) {
+    console.error('Coupon validate error:', error)
+    return NextResponse.json({ valid: false, reason: '쿠폰 검증 실패' })
+  }
+}

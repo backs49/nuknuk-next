@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getOrderById, updateOrderStatus, updateOrderMemo } from "@/lib/order-db";
+import { onOrderCompleted, onOrderCancelled } from "@/lib/order-hooks";
 
 export async function GET(
   request: NextRequest,
@@ -47,6 +48,14 @@ export async function PUT(
 
     if (status) {
       const order = await updateOrderStatus(params.id, status);
+
+      // 주문 완료/취소 시 후처리 (포인트, 쿠폰, 추천)
+      if (status === "completed") {
+        onOrderCompleted(params.id).catch(console.error);
+      } else if (status === "cancelled" || status === "refunded") {
+        onOrderCancelled(params.id).catch(console.error);
+      }
+
       return NextResponse.json({ order });
     }
 

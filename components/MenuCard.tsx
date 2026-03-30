@@ -71,7 +71,7 @@ export default function MenuCard({ item, index }: MenuCardProps) {
 
   const cardContent = (
     <motion.div
-      className="group bg-white rounded-2xl overflow-hidden card-hover shadow-md flex flex-col"
+      className="group bg-white rounded-2xl overflow-hidden card-hover shadow-md flex flex-col h-full"
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-30px" }}
@@ -203,7 +203,7 @@ export default function MenuCard({ item, index }: MenuCardProps) {
   }
 
   return (
-    <Link href={`/menu/${item.id}`} className="block">
+    <Link href={`/menu/${item.id}`} className="block h-full">
       {cardContent}
     </Link>
   );

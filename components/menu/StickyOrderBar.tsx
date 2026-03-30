@@ -18,6 +18,7 @@ interface StickyOrderBarProps {
   totalPrice: number;
   isValid: boolean;
   missingGroups: string[];
+  inline?: boolean;
 }
 
 export default function StickyOrderBar({
@@ -26,6 +27,7 @@ export default function StickyOrderBar({
   totalPrice,
   isValid,
   missingGroups,
+  inline,
 }: StickyOrderBarProps) {
   const [quantity, setQuantity] = useState(1);
   const { addItem, openCart } = useCart();
@@ -67,8 +69,11 @@ export default function StickyOrderBar({
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-      <div className="max-w-lg mx-auto px-4 py-3">
+    <div className={inline
+      ? "bg-white rounded-2xl shadow-sm p-5"
+      : "fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
+    }>
+      <div className={inline ? "" : "max-w-lg mx-auto px-4 py-3"}>
         {/* Validation message */}
         {!isValid && (
           <p className="text-xs text-blush-400 mb-2 text-center">

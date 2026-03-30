@@ -175,7 +175,7 @@ export default function AdminDashboardPage() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div>
-      <h1 className="text-2xl font-bold text-charcoal-400 mb-8">대시보드</h1>
+      <h1 className="text-xl sm:text-2xl font-bold text-charcoal-400 mb-6 sm:mb-8">대시보드</h1>
 
       {/* ── 매출 대시보드 ── */}
       <section className="mb-10 space-y-6">

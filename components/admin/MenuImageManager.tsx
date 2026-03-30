@@ -128,7 +128,7 @@ export default function MenuImageManager({
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {images.map((img, index) => (
           <div key={img.imageUrl + index} className="relative group">
             {/* Thumbnail */}

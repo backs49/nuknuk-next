@@ -243,7 +243,7 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
           />
         </Field>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="가격 (원)" required>
             <input
               type="number"
