@@ -32,6 +32,9 @@ export default function ImageGallery({
   category,
 }: ImageGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
+  const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
+  const imageContainerRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
 
@@ -45,6 +48,14 @@ export default function ImageGallery({
 
   const total = displayImages.length;
   const showControls = total > 1;
+
+  const goNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % total);
+  }, [total]);
+
+  const goPrev = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + total) % total);
+  }, [total]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -61,13 +72,19 @@ export default function ImageGallery({
     if (Math.abs(diff) < threshold) return;
 
     if (diff > 0) {
-      // Swipe left -> next
       setCurrentIndex((prev) => Math.min(prev + 1, total - 1));
     } else {
-      // Swipe right -> prev
       setCurrentIndex((prev) => Math.max(prev - 1, 0));
     }
   }, [total]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!imageContainerRef.current) return;
+    const rect = imageContainerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomPos({ x, y });
+  }, []);
 
   // No images at all: show category gradient placeholder
   if (total === 0) {
@@ -87,12 +104,16 @@ export default function ImageGallery({
 
   return (
     <div className="relative w-full">
-      {/* Image container */}
+      {/* Main image container */}
       <div
-        className="relative aspect-[4/3] lg:aspect-square overflow-hidden"
+        ref={imageContainerRef}
+        className="relative aspect-[4/3] lg:aspect-square overflow-hidden cursor-crosshair group"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
+        onMouseMove={handleMouseMove}
       >
         <Image
           src={displayImages[currentIndex]}
@@ -103,17 +124,62 @@ export default function ImageGallery({
           priority={currentIndex === 0}
         />
 
-        {/* Counter */}
+{/* 렌즈는 확대 오버레이가 전체를 덮으므로 불필요 */}
+
+        {/* Counter (모바일) */}
         {showControls && (
-          <div className="absolute top-3 right-3 px-2.5 py-1 bg-black/50 rounded-full text-white text-xs font-medium">
+          <div className="lg:hidden absolute top-3 right-3 px-2.5 py-1 bg-black/50 rounded-full text-white text-xs font-medium">
             {currentIndex + 1}/{total}
           </div>
         )}
+
+        {/* PC: 좌우 화살표 (hover 시 표시) */}
+        {showControls && (
+          <>
+            <button
+              onClick={(e) => { e.stopPropagation(); goPrev(); }}
+              className="hidden lg:flex absolute left-0 top-0 bottom-0 w-12 items-center justify-center
+                bg-gradient-to-r from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-20"
+              aria-label="이전 이미지"
+            >
+              <svg className="w-6 h-6 text-white drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); goNext(); }}
+              className="hidden lg:flex absolute right-0 top-0 bottom-0 w-12 items-center justify-center
+                bg-gradient-to-l from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-20"
+              aria-label="다음 이미지"
+            >
+              <svg className="w-6 h-6 text-white drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </>
+        )}
       </div>
 
-      {/* Dot indicators */}
+      {/* PC: 확대 오버레이 (이미지 위에 줌 표시) */}
+      {isHovering && (
+        <div
+          className="hidden lg:block absolute inset-0 aspect-[4/3] lg:aspect-square overflow-hidden rounded-none lg:rounded-2xl z-30 pointer-events-none"
+        >
+          <div
+            className="w-full h-full"
+            style={{
+              backgroundImage: `url(${displayImages[currentIndex]})`,
+              backgroundSize: "250%",
+              backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
+              backgroundRepeat: "no-repeat",
+            }}
+          />
+        </div>
+      )}
+
+      {/* 모바일: 점 인디케이터 */}
       {showControls && (
-        <div className="flex justify-center gap-1.5 py-3">
+        <div className="flex lg:hidden justify-center gap-1.5 py-3">
           {displayImages.map((_, idx) => (
             <button
               key={idx}
@@ -123,6 +189,31 @@ export default function ImageGallery({
               }`}
               aria-label={`${idx + 1}번째 이미지`}
             />
+          ))}
+        </div>
+      )}
+
+      {/* PC: 썸네일 스트립 */}
+      {showControls && (
+        <div className="hidden lg:flex gap-2 mt-3">
+          {displayImages.map((url, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentIndex(idx)}
+              className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${
+                idx === currentIndex
+                  ? "border-sage-400 shadow-sm"
+                  : "border-transparent opacity-60 hover:opacity-100"
+              }`}
+            >
+              <Image
+                src={url}
+                alt={`${menuName} 썸네일 ${idx + 1}`}
+                fill
+                className="object-cover"
+                sizes="64px"
+              />
+            </button>
           ))}
         </div>
       )}
