@@ -1,5 +1,7 @@
 // data/order.ts
 
+import type { SelectedOption } from "@/lib/option-utils";
+
 export type OrderStatus = "pending" | "paid" | "confirmed" | "completed" | "cancelled" | "refunded";
 export type OrderChannel = "direct" | "link";
 export type DeliveryMethod = "pickup" | "shipping";
@@ -12,6 +14,7 @@ export interface OrderItem {
   quantity: number;
   unitPrice: number;
   subtotal: number;
+  selectedOptions?: SelectedOption[];
 }
 
 export interface Order {
@@ -29,6 +32,13 @@ export interface Order {
   pickupDate: string | null;
   totalAmount: number;
   shippingFee: number;
+  customerId: string | null;
+  couponId: string | null;
+  couponCode: string | null;
+  couponDiscount: number;
+  pointUsed: number;
+  pointEarned: number;
+  finalAmount: number;
   paymentKey: string | null;
   paymentMethod: string | null;
   paidAt: string | null;
@@ -53,6 +63,13 @@ export interface DbOrder {
   pickup_date: string | null;
   total_amount: number;
   shipping_fee: number;
+  customer_id: string | null;
+  coupon_id: string | null;
+  coupon_code: string | null;
+  coupon_discount: number;
+  point_used: number;
+  point_earned: number;
+  final_amount: number;
   payment_key: string | null;
   payment_method: string | null;
   paid_at: string | null;
@@ -68,6 +85,7 @@ export interface DbOrderItem {
   quantity: number;
   unit_price: number;
   subtotal: number;
+  selected_options?: Record<string, unknown>[] | null;
 }
 
 // 주문 생성 입력 타입
@@ -82,11 +100,20 @@ export interface CreateOrderInput {
   deliveryAddress?: string;
   pickupDate?: string;
   shippingFee?: number;
+  customerId?: string;
+  referralCode?: string;
+  couponId?: string;
+  couponCode?: string;
+  couponDiscount?: number;
+  pointUsed?: number;
+  pointEarned?: number;
+  finalAmount?: number;
   items: {
     menuItemId?: string;
     name: string;
     quantity: number;
     unitPrice: number;
+    selectedOptions?: SelectedOption[];
   }[];
 }
 
@@ -126,6 +153,13 @@ export function toOrder(dbOrder: DbOrder, dbItems: DbOrderItem[]): Order {
     pickupDate: dbOrder.pickup_date,
     totalAmount: dbOrder.total_amount,
     shippingFee: dbOrder.shipping_fee,
+    customerId: dbOrder.customer_id,
+    couponId: dbOrder.coupon_id,
+    couponCode: dbOrder.coupon_code,
+    couponDiscount: dbOrder.coupon_discount,
+    pointUsed: dbOrder.point_used,
+    pointEarned: dbOrder.point_earned,
+    finalAmount: dbOrder.final_amount,
     paymentKey: dbOrder.payment_key,
     paymentMethod: dbOrder.payment_method,
     paidAt: dbOrder.paid_at,
@@ -139,6 +173,7 @@ export function toOrder(dbOrder: DbOrder, dbItems: DbOrderItem[]): Order {
       quantity: item.quantity,
       unitPrice: item.unit_price,
       subtotal: item.subtotal,
+      selectedOptions: item.selected_options as unknown as SelectedOption[] ?? undefined,
     })),
   };
 }

@@ -30,6 +30,8 @@ export interface MenuItem {
   isNew?: boolean; // 신메뉴 배지 표시
   isConsultation?: boolean; // 상담 상품 (장바구니 대신 Instagram DM 연결)
   hidePrice?: boolean; // 가격 숨김 (상담 상품에서 사용)
+  images?: { id: string; imageUrl: string; sortOrder: number }[];
+  hasOptions?: boolean;
 }
 
 export type MenuCategory = "rice-cake" | "cake" | "cookie" | "beverage";
