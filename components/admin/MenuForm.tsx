@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import MenuImageManager from "./MenuImageManager";
 import DetailBlockEditor from "./DetailBlockEditor";
+import OptionGroupEditor from "./OptionGroupEditor";
 
 const ALLERGENS = [
   { value: "gluten", label: "밀" },
@@ -91,6 +92,14 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
 
   const [images, setImages] = useState<{ imageUrl: string; sortOrder: number }[]>([]);
   const [blocks, setBlocks] = useState<{ type: "text" | "image"; content: string; sortOrder: number }[]>([]);
+  const [optionGroups, setOptionGroups] = useState<{
+    name: string;
+    type: "single" | "multi";
+    required: boolean;
+    priceMode: "additional" | "fixed";
+    sortOrder: number;
+    items: { name: string; price: number; sortOrder: number }[];
+  }[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -165,6 +174,15 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ blocks }),
+        });
+      }
+
+      // Save option groups for edit mode
+      if (mode === "edit" && initialData?.id) {
+        await fetch(`/api/admin/menu/${initialData.id}/options`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ groups: optionGroups }),
         });
       }
 
@@ -350,6 +368,14 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
         <DetailBlockEditor
           menuItemId={form.id || initialData?.id || ""}
           onBlocksChange={setBlocks}
+        />
+      </Section>
+
+      {/* 옵션 설정 */}
+      <Section title="옵션 설정">
+        <OptionGroupEditor
+          menuItemId={form.id || initialData?.id || ""}
+          onOptionsChange={setOptionGroups}
         />
       </Section>
 
