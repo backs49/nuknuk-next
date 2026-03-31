@@ -20,7 +20,7 @@ function renderStyledText(text: string) {
       return (
         <div
           key={i}
-          className="my-3 px-4 py-2.5 bg-sage-400/10 border-l-4 border-sage-400 rounded-r-lg text-sm font-semibold text-charcoal-400"
+          className="my-3 px-4 py-2.5 bg-sage-400/10 border-l-4 border-sage-400 rounded-r-lg text-base font-semibold text-charcoal-400"
         >
           {bracketMatch[1]}
         </div>
@@ -37,7 +37,7 @@ function renderStyledText(text: string) {
     const hasBold = parts.some((p) => p.startsWith("**"));
 
     return (
-      <p key={i} className="text-sm text-charcoal-300 leading-relaxed">
+      <p key={i} className="text-base text-charcoal-300 leading-relaxed">
         {hasBold
           ? parts.map((part, j) =>
               part.startsWith("**") && part.endsWith("**") ? (
