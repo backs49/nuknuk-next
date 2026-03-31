@@ -25,6 +25,11 @@ const DEFAULTS: Record<string, string> = {
   referral_reward_points: '1000',
   min_point_use: '0',
   point_use_unit: '1',
+  banner_enabled: 'false',
+  banner_text: '',
+  banner_link: '',
+  banner_bg_color: '#6B8E23',
+  banner_text_color: '#FFFFFF',
 }
 
 function toSetting(db: DbShopSetting): ShopSetting {
@@ -88,15 +93,17 @@ export async function getSettingNumber(key: string): Promise<number> {
   return Number(value) || Number(DEFAULTS[key]) || 0
 }
 
-// 설정 업데이트
+// 설정 업데이트 (없으면 생성)
 export async function updateSetting(key: string, value: string): Promise<void> {
   const supabase = getServiceSupabase()
   if (!supabase) throw new Error('Supabase가 설정되지 않았습니다')
 
   const { error } = await supabase
     .from('shop_settings')
-    .update({ value, updated_at: new Date().toISOString() })
-    .eq('key', key)
+    .upsert(
+      { key, value, label: key, updated_at: new Date().toISOString() },
+      { onConflict: 'key' }
+    )
 
   if (error) throw new Error(`설정 업데이트 실패: ${error.message}`)
 }

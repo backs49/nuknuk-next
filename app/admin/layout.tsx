@@ -63,6 +63,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     ...(REVIEW_ENABLED
       ? [{ href: "/admin/reviews", label: "리뷰 관리", icon: "⭐" }]
       : []),
+    { href: "/admin/banner", label: "공지 배너", icon: "📢" },
     ...(COUPON_POINT_ENABLED
       ? [
           { href: "/admin/customers", label: "고객 관리", icon: "👥" },

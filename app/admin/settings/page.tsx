@@ -129,7 +129,7 @@ export default function SettingsPage() {
       )}
 
       <div className="space-y-6">
-        {settings.map((setting) => {
+        {settings.filter((s) => !s.key.startsWith("banner_") && !s.key.startsWith("review_point_")).map((setting) => {
           const config = SETTING_CONFIG[setting.key];
           return (
             <div

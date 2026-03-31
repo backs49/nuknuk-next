@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import AnnouncementBanner from "@/components/AnnouncementBanner";
 import HeroSection from "@/components/HeroSection";
 import MenuSection from "@/components/MenuSection";
 import AboutSection from "@/components/AboutSection";
@@ -18,6 +19,7 @@ export default async function Home() {
 
   return (
     <>
+      <AnnouncementBanner />
       <Header />
       <main>
         <HeroSection />
