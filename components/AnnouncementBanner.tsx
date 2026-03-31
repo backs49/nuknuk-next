@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface BannerData {
   text: string;
@@ -12,16 +12,15 @@ interface BannerData {
 export default function AnnouncementBanner() {
   const [banner, setBanner] = useState<BannerData | null>(null);
   const [dismissed, setDismissed] = useState(false);
+  const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // 오늘 하루 안보기 체크
     const dismissedDate = localStorage.getItem("banner_dismissed");
     if (dismissedDate === new Date().toISOString().slice(0, 10)) {
       setDismissed(true);
       return;
     }
 
-    // 배너 설정 조회
     fetch("/api/banner")
       .then((res) => res.json())
       .then((data) => {
@@ -37,6 +36,16 @@ export default function AnnouncementBanner() {
       .catch(() => {});
   }, []);
 
+  // 배너 높이를 CSS 변수로 설정 → 헤더가 이를 참조
+  useEffect(() => {
+    if (banner && !dismissed && bannerRef.current) {
+      const h = bannerRef.current.offsetHeight;
+      document.documentElement.style.setProperty("--banner-height", `${h}px`);
+    } else {
+      document.documentElement.style.setProperty("--banner-height", "0px");
+    }
+  }, [banner, dismissed]);
+
   if (dismissed || !banner) return null;
 
   const handleDismiss = () => {
@@ -44,6 +53,7 @@ export default function AnnouncementBanner() {
       "banner_dismissed",
       new Date().toISOString().slice(0, 10)
     );
+    document.documentElement.style.setProperty("--banner-height", "0px");
     setDismissed(true);
   };
 
@@ -53,14 +63,17 @@ export default function AnnouncementBanner() {
 
   return (
     <div
-      className="relative flex items-center justify-center px-10 py-2.5 text-center"
+      ref={bannerRef}
+      className="fixed top-0 left-0 right-0 z-[60] flex items-center justify-center px-10 py-2.5 text-center"
       style={{ backgroundColor: banner.bgColor, color: banner.textColor }}
     >
       {banner.link ? (
         <a
           href={banner.link}
           target={banner.link.startsWith("http") ? "_blank" : undefined}
-          rel={banner.link.startsWith("http") ? "noopener noreferrer" : undefined}
+          rel={
+            banner.link.startsWith("http") ? "noopener noreferrer" : undefined
+          }
           className="hover:underline"
         >
           {content}
@@ -69,8 +82,12 @@ export default function AnnouncementBanner() {
         content
       )}
       <button
-        onClick={(e) => { e.stopPropagation(); handleDismiss(); }}
-        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-6 h-6 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity text-sm"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleDismiss();
+        }}
+        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity text-base"
         style={{ color: banner.textColor }}
         aria-label="오늘 하루 안보기"
         title="오늘 하루 안보기"

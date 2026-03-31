@@ -40,7 +40,8 @@ export default function Header() {
   return (
     <>
       <motion.header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        style={{ top: "var(--banner-height, 0px)" }}
+        className={`fixed left-0 right-0 z-50 transition-all duration-500 ${
           scrolled
             ? "bg-cream-100/90 backdrop-blur-lg shadow-md py-3"
             : "bg-transparent py-5"
