@@ -3,6 +3,8 @@
 import { NextResponse } from 'next/server'
 import { getSetting } from '@/lib/settings-db'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const [enabled, text, link, bgColor, textColor] = await Promise.all([
