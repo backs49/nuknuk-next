@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
   const supabase = getSupabaseOrThrow()
   const { data: order } = await supabase
     .from('orders')
-    .select('id, status, customer_phone, customer_name, customer_id')
+    .select('id, status, customer_phone, customer_name, customer_id, order_items(menu_item_id)')
     .eq('id', orderId)
     .single()
 
@@ -63,6 +63,12 @@ export async function POST(req: NextRequest) {
   const normalizePhone = (p: string) => p.replace(/[^0-9]/g, '')
   if (normalizePhone(order.customer_phone) !== normalizePhone(phone)) {
     return NextResponse.json({ error: '전화번호가 일치하지 않습니다' }, { status: 400 })
+  }
+
+  // menuItemId가 주문에 포함되어 있는지 확인
+  const orderItemIds = (order.order_items as { menu_item_id: string }[]).map((i) => i.menu_item_id)
+  if (!orderItemIds.includes(menuItemId)) {
+    return NextResponse.json({ error: '해당 상품은 이 주문에 포함되어 있지 않습니다' }, { status: 400 })
   }
 
   // 포인트 계산

@@ -10,19 +10,20 @@ import { getSupabaseOrThrow } from '@/lib/db-utils'
 // PATCH: 답글 작성 또는 숨김 토글
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
 
+  const { id } = await params
   const body = await req.json()
 
   try {
     if (body.adminReply !== undefined) {
-      await setAdminReply(params.id, body.adminReply)
+      await setAdminReply(id, body.adminReply)
     }
     if (body.isVisible !== undefined) {
-      await toggleReviewVisibility(params.id, body.isVisible)
+      await toggleReviewVisibility(id, body.isVisible)
     }
     return NextResponse.json({ success: true })
   } catch (err) {
@@ -34,13 +35,15 @@ export async function PATCH(
 // DELETE: 리뷰 삭제 + 포인트 회수
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: '인증 필요' }, { status: 401 })
 
+  const { id } = await params
+
   try {
-    const review = await getReviewById(params.id)
+    const review = await getReviewById(id)
     if (!review) {
       return NextResponse.json({ error: '리뷰를 찾을 수 없습니다' }, { status: 404 })
     }
@@ -69,7 +72,7 @@ export async function DELETE(
       }
     }
 
-    await deleteReview(params.id)
+    await deleteReview(id)
     return NextResponse.json({ success: true })
   } catch (err) {
     const message = err instanceof Error ? err.message : '삭제 실패'

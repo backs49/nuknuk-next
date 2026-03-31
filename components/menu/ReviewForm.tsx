@@ -104,6 +104,8 @@ export default function ReviewForm({
     for (const file of Array.from(files)) {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("orderId", orderId);
+      formData.append("phone", phone.trim());
       try {
         const res = await fetch("/api/reviews/upload", { method: "POST", body: formData });
         const data = await res.json();
