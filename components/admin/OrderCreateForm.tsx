@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import PaymentLinkModal from "./PaymentLinkModal";
+import type { OptionGroup, SelectedOption } from "@/lib/option-utils";
+import { calculateOptionPrice } from "@/lib/option-utils";
 
 interface DbMenuItem {
   id: string;
@@ -15,6 +17,10 @@ interface OrderItem {
   name: string;
   quantity: number;
   unitPrice: number;
+  selectedOptions?: SelectedOption[];
+  optionGroups?: OptionGroup[];
+  optionsOpen?: boolean;
+  priceOverridden?: boolean;
 }
 
 interface CreatedOrder {
@@ -60,7 +66,19 @@ export default function OrderCreateForm() {
       });
   }, []);
 
-  function addMenuItemRow(item: DbMenuItem) {
+  async function addMenuItemRow(item: DbMenuItem) {
+    setMenuSelectOpen(false);
+
+    // 옵션 그룹 조회
+    let optionGroups: OptionGroup[] = [];
+    try {
+      const res = await fetch(`/api/admin/menu/${item.id}/options`);
+      const data = await res.json();
+      optionGroups = data.options || [];
+    } catch {
+      // 옵션 조회 실패 시 옵션 없이 진행
+    }
+
     setItems((prev) => [
       ...prev,
       {
@@ -68,9 +86,12 @@ export default function OrderCreateForm() {
         name: item.name,
         quantity: 1,
         unitPrice: item.price,
+        selectedOptions: [],
+        optionGroups,
+        optionsOpen: optionGroups.length > 0,
+        priceOverridden: false,
       },
     ]);
-    setMenuSelectOpen(false);
   }
 
   function addCustomItemRow() {
@@ -86,9 +107,102 @@ export default function OrderCreateForm() {
 
   function updateItem(index: number, field: keyof OrderItem, value: string | number) {
     setItems((prev) =>
+      prev.map((item, i) => {
+        if (i !== index) return item;
+        const updated = { ...item, [field]: value };
+        // 사장님이 단가를 직접 수정하면 자동계산 해제
+        if (field === "unitPrice") {
+          updated.priceOverridden = true;
+        }
+        return updated;
+      })
+    );
+  }
+
+  function handleOptionSelect(itemIndex: number, group: OptionGroup, optionItemId: string) {
+    setItems((prev) =>
+      prev.map((item, i) => {
+        if (i !== itemIndex) return item;
+        const current = item.selectedOptions || [];
+        let newSelected: SelectedOption[];
+
+        if (group.type === "single") {
+          // 단일: 이미 선택된 항목 클릭 시 선택 해제, 아니면 교체
+          const alreadySelected = current.find(
+            (s) => s.groupId === group.id && s.itemId === optionItemId
+          );
+          if (alreadySelected) {
+            newSelected = current.filter((s) => s.groupId !== group.id);
+          } else {
+            const optItem = group.items.find((oi) => oi.id === optionItemId);
+            if (!optItem) return item;
+            newSelected = [
+              ...current.filter((s) => s.groupId !== group.id),
+              {
+                groupId: group.id,
+                itemId: optItem.id,
+                groupName: group.name,
+                itemName: optItem.name,
+                price: optItem.price,
+                priceMode: group.priceMode,
+              },
+            ];
+          }
+        } else {
+          // 복수: 토글
+          const existing = current.find(
+            (s) => s.groupId === group.id && s.itemId === optionItemId
+          );
+          if (existing) {
+            newSelected = current.filter(
+              (s) => !(s.groupId === group.id && s.itemId === optionItemId)
+            );
+          } else {
+            const optItem = group.items.find((oi) => oi.id === optionItemId);
+            if (!optItem) return item;
+            newSelected = [
+              ...current,
+              {
+                groupId: group.id,
+                itemId: optItem.id,
+                groupName: group.name,
+                itemName: optItem.name,
+                price: optItem.price,
+                priceMode: group.priceMode,
+              },
+            ];
+          }
+        }
+
+        // 자동계산 (사장님이 수동 수정하지 않은 경우)
+        const basePrice = menuItems.find((m) => m.id === item.menuItemId)?.price ?? item.unitPrice;
+        const autoPrice = calculateOptionPrice(basePrice, newSelected);
+
+        return {
+          ...item,
+          selectedOptions: newSelected,
+          unitPrice: item.priceOverridden ? item.unitPrice : autoPrice,
+        };
+      })
+    );
+  }
+
+  function toggleOptions(index: number) {
+    setItems((prev) =>
       prev.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
+        i === index ? { ...item, optionsOpen: !item.optionsOpen } : item
       )
+    );
+  }
+
+  function resetPriceToAuto(index: number) {
+    setItems((prev) =>
+      prev.map((item, i) => {
+        if (i !== index) return item;
+        const basePrice = menuItems.find((m) => m.id === item.menuItemId)?.price ?? 0;
+        const autoPrice = calculateOptionPrice(basePrice, item.selectedOptions || []);
+        return { ...item, unitPrice: autoPrice, priceOverridden: false };
+      })
     );
   }
 
@@ -146,6 +260,9 @@ export default function OrderCreateForm() {
           name: item.name,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
+          ...(item.selectedOptions && item.selectedOptions.length > 0
+            ? { selectedOptions: item.selectedOptions }
+            : {}),
         })),
       };
 
@@ -222,69 +339,180 @@ export default function OrderCreateForm() {
                 <span />
               </div>
               {items.map((item, index) => (
-                <div
-                  key={index}
-                  className="grid grid-cols-[1fr_100px_88px_72px_32px] gap-2 items-center"
-                >
-                  <input
-                    type="text"
-                    value={item.name}
-                    onChange={(e) => updateItem(index, "name", e.target.value)}
-                    className="input text-sm"
-                    placeholder="상품명"
-                    required
-                  />
-                  <input
-                    type="number"
-                    value={item.unitPrice || ""}
-                    onChange={(e) =>
-                      updateItem(index, "unitPrice", Number(e.target.value))
-                    }
-                    className="input text-sm"
-                    min={0}
-                    step={500}
-                    placeholder="0"
-                    required
-                  />
-                  {/* 수량 스테퍼 */}
-                  <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        updateItem(
-                          index,
-                          "quantity",
-                          Math.max(1, item.quantity - 1)
-                        )
-                      }
-                      className="px-2 py-1.5 text-charcoal-300 hover:bg-gray-100 transition text-sm font-bold"
-                    >
-                      −
-                    </button>
-                    <span className="flex-1 text-center text-sm text-charcoal-400">
-                      {item.quantity}
+                <div key={index}>
+                  {/* 메인 행 */}
+                  <div className="grid grid-cols-[1fr_100px_88px_72px_32px] gap-2 items-center">
+                    <div className="flex items-center gap-1">
+                      {item.optionGroups && item.optionGroups.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => toggleOptions(index)}
+                          className="flex-shrink-0 w-6 h-6 flex items-center justify-center text-charcoal-200 hover:text-sage-400 transition"
+                          title="옵션 선택"
+                        >
+                          <svg
+                            className={`w-4 h-4 transition-transform ${item.optionsOpen ? "rotate-90" : ""}`}
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      )}
+                      <input
+                        type="text"
+                        value={item.name}
+                        onChange={(e) => updateItem(index, "name", e.target.value)}
+                        className="input text-sm w-full"
+                        placeholder="상품명"
+                        required
+                      />
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={item.unitPrice || ""}
+                        onChange={(e) =>
+                          updateItem(index, "unitPrice", Number(e.target.value))
+                        }
+                        className={`input text-sm ${item.priceOverridden ? "ring-1 ring-amber-300" : ""}`}
+                        min={0}
+                        step={500}
+                        placeholder="0"
+                        required
+                      />
+                      {item.priceOverridden && (
+                        <button
+                          type="button"
+                          onClick={() => resetPriceToAuto(index)}
+                          className="absolute -top-1 -right-1 w-4 h-4 bg-amber-400 text-white rounded-full text-[8px] flex items-center justify-center hover:bg-amber-500"
+                          title="자동 계산으로 되돌리기"
+                        >
+                          ↺
+                        </button>
+                      )}
+                    </div>
+                    {/* 수량 스테퍼 */}
+                    <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateItem(
+                            index,
+                            "quantity",
+                            Math.max(1, item.quantity - 1)
+                          )
+                        }
+                        className="px-2 py-1.5 text-charcoal-300 hover:bg-gray-100 transition text-sm font-bold"
+                      >
+                        −
+                      </button>
+                      <span className="flex-1 text-center text-sm text-charcoal-400">
+                        {item.quantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateItem(index, "quantity", item.quantity + 1)
+                        }
+                        className="px-2 py-1.5 text-charcoal-300 hover:bg-gray-100 transition text-sm font-bold"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <span className="text-sm text-charcoal-300 text-right">
+                      {(item.unitPrice * item.quantity).toLocaleString()}원
                     </span>
                     <button
                       type="button"
-                      onClick={() =>
-                        updateItem(index, "quantity", item.quantity + 1)
-                      }
-                      className="px-2 py-1.5 text-charcoal-300 hover:bg-gray-100 transition text-sm font-bold"
+                      onClick={() => removeItem(index)}
+                      className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-400 hover:bg-red-50 rounded-lg transition"
+                      aria-label="삭제"
                     >
-                      +
+                      ✕
                     </button>
                   </div>
-                  <span className="text-sm text-charcoal-300 text-right">
-                    {(item.unitPrice * item.quantity).toLocaleString()}원
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => removeItem(index)}
-                    className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-400 hover:bg-red-50 rounded-lg transition"
-                    aria-label="삭제"
-                  >
-                    ✕
-                  </button>
+
+                  {/* 옵션 선택 영역 */}
+                  {item.optionsOpen && item.optionGroups && item.optionGroups.length > 0 && (
+                    <div className="ml-7 mt-2 mb-1 p-3 bg-cream-100 rounded-lg space-y-3">
+                      {/* 선택된 옵션 요약 */}
+                      {item.selectedOptions && item.selectedOptions.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {item.selectedOptions.map((opt) => (
+                            <span
+                              key={`${opt.groupId}-${opt.itemId}`}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 bg-sage-400/10 text-sage-400 text-xs rounded-full"
+                            >
+                              {opt.itemName}
+                              {opt.priceMode === "fixed"
+                                ? ` (${opt.price.toLocaleString()}원)`
+                                : opt.price > 0
+                                  ? ` (+${opt.price.toLocaleString()}원)`
+                                  : ""}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {item.optionGroups
+                        .sort((a, b) => a.sortOrder - b.sortOrder)
+                        .map((group) => {
+                          const selectedIds = (item.selectedOptions || [])
+                            .filter((s) => s.groupId === group.id)
+                            .map((s) => s.itemId);
+
+                          return (
+                            <div key={group.id}>
+                              <p className="text-xs font-medium text-charcoal-300 mb-1.5">
+                                {group.name}
+                                {group.required && (
+                                  <span className="ml-1 text-blush-400">*</span>
+                                )}
+                                <span className="ml-1 text-charcoal-100 font-normal">
+                                  ({group.type === "single" ? "택1" : "복수"} ·{" "}
+                                  {group.priceMode === "fixed" ? "고정가" : "추가금"})
+                                </span>
+                              </p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {group.items
+                                  .sort((a, b) => a.sortOrder - b.sortOrder)
+                                  .map((optItem) => {
+                                    const isSelected = selectedIds.includes(optItem.id);
+                                    return (
+                                      <button
+                                        key={optItem.id}
+                                        type="button"
+                                        onClick={() => handleOptionSelect(index, group, optItem.id)}
+                                        className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                                          isSelected
+                                            ? "border-sage-400 bg-sage-400/10 text-sage-400 font-medium"
+                                            : "border-gray-200 text-charcoal-300 hover:border-gray-300"
+                                        }`}
+                                      >
+                                        {optItem.name}
+                                        <span className="ml-1 text-charcoal-200">
+                                          {group.priceMode === "fixed"
+                                            ? `${optItem.price.toLocaleString()}원`
+                                            : optItem.price === 0
+                                              ? "+0원"
+                                              : `+${optItem.price.toLocaleString()}원`}
+                                        </span>
+                                      </button>
+                                    );
+                                  })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      {item.priceOverridden && (
+                        <p className="text-[10px] text-amber-500">
+                          단가가 수동 수정됨 — 옵션 선택이 단가에 반영되지 않습니다
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

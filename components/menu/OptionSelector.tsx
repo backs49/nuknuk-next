@@ -59,7 +59,10 @@ export default function OptionSelector({
       const current = prev[group.id] ?? [];
 
       if (group.type === "single") {
-        // Radio: replace
+        // Radio: 필수가 아니면 토글(선택 해제) 허용
+        if (!group.required && current.includes(itemId)) {
+          return { ...prev, [group.id]: [] };
+        }
         return { ...prev, [group.id]: [itemId] };
       } else {
         // Multi: toggle
