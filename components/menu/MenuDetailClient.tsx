@@ -194,7 +194,30 @@ export default function MenuDetailClient({
                     {item.name}
                   </h1>
                   {item.nameEn && (
-                    <p className="text-xs text-charcoal-100 mb-3">{item.nameEn}</p>
+                    <p className="text-xs text-charcoal-100 mb-1">{item.nameEn}</p>
+                  )}
+
+                  {/* 리뷰 미니 요약 — 클릭 시 리뷰 섹션으로 스크롤 */}
+                  {reviewData && reviewData.summary.totalCount > 0 && (
+                    <button
+                      onClick={() =>
+                        document
+                          .getElementById("review-section")
+                          ?.scrollIntoView({ behavior: "smooth" })
+                      }
+                      className="flex items-center gap-1.5 mb-3 text-sm text-charcoal-300 hover:text-sage-400 transition-colors"
+                    >
+                      <span className="text-amber-400">★</span>
+                      <span className="font-semibold text-charcoal-400">
+                        {reviewData.summary.averageRating}
+                      </span>
+                      <span className="text-charcoal-200">
+                        리뷰 {reviewData.summary.totalCount}개
+                      </span>
+                      <svg className="w-3 h-3 text-charcoal-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
                   )}
 
                   {/* Description */}
@@ -322,6 +345,7 @@ export default function MenuDetailClient({
 
         {/* 리뷰 섹션 */}
         {reviewData && (
+          <div id="review-section">
           <ReviewSection
             menuItemId={item.id}
             menuItemName={item.name}
@@ -329,6 +353,7 @@ export default function MenuDetailClient({
             summary={reviewData.summary}
             pointEnabled={COUPON_POINT_ENABLED}
           />
+          </div>
         )}
       </div>
 
