@@ -22,6 +22,9 @@ import DetailBlocks from "./DetailBlocks";
 import StickyOrderBar from "./StickyOrderBar";
 import BenefitsPreview from "./BenefitsPreview";
 import type { BenefitsData } from "./BenefitsPreview";
+import ReviewSection from "./ReviewSection";
+import type { Review, ReviewSummary } from "@/lib/review-db";
+import { COUPON_POINT_ENABLED } from "@/lib/feature-flags";
 
 interface MenuDetailClientProps {
   menuItem: DbMenuItem;
@@ -30,6 +33,10 @@ interface MenuDetailClientProps {
   blocks: DetailBlock[];
   options: OptionGroup[];
   benefitsData?: BenefitsData | null;
+  reviewData?: {
+    reviews: Review[];
+    summary: ReviewSummary;
+  } | null;
 }
 
 export default function MenuDetailClient({
@@ -39,6 +46,7 @@ export default function MenuDetailClient({
   blocks,
   options,
   benefitsData,
+  reviewData,
 }: MenuDetailClientProps) {
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([]);
 
@@ -310,6 +318,17 @@ export default function MenuDetailClient({
               <DetailBlocks blocks={blocks} />
             </div>
           </div>
+        )}
+
+        {/* 리뷰 섹션 */}
+        {reviewData && (
+          <ReviewSection
+            menuItemId={item.id}
+            menuItemName={item.name}
+            initialReviews={reviewData.reviews}
+            summary={reviewData.summary}
+            pointEnabled={COUPON_POINT_ENABLED}
+          />
         )}
       </div>
 

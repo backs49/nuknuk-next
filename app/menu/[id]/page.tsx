@@ -6,6 +6,9 @@ import { COUPON_POINT_ENABLED } from "@/lib/feature-flags";
 import { getSettingNumber } from "@/lib/settings-db";
 import type { BenefitsData } from "@/components/menu/BenefitsPreview";
 import { getServiceSupabase } from "@/lib/supabase";
+import { REVIEW_ENABLED } from "@/lib/feature-flags";
+import { getReviewsByMenuItem, getReviewSummary } from "@/lib/review-db";
+import type { ReviewSummary, Review } from "@/lib/review-db";
 
 export const revalidate = 60;
 
@@ -47,16 +50,34 @@ async function fetchBenefitsData(): Promise<BenefitsData | null> {
   return { pointEarnRate, referralRewardPoints, firstOrderCoupon };
 }
 
+async function fetchReviewData(menuItemId: string): Promise<{
+  reviews: Review[];
+  summary: ReviewSummary;
+} | null> {
+  if (!REVIEW_ENABLED) return null;
+
+  try {
+    const [reviews, summary] = await Promise.all([
+      getReviewsByMenuItem(menuItemId, { limit: 5 }),
+      getReviewSummary(menuItemId),
+    ]);
+    return { reviews, summary };
+  } catch {
+    return { reviews: [], summary: { averageRating: 0, totalCount: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } } };
+  }
+}
+
 export default async function MenuDetailPage({
   params,
 }: {
   params: { id: string };
 }) {
-  const [menuItem, detail, categories, benefitsData] = await Promise.all([
+  const [menuItem, detail, categories, benefitsData, reviewData] = await Promise.all([
     getMenuItem(params.id),
     getMenuDetail(params.id),
     getCategories(),
     fetchBenefitsData(),
+    fetchReviewData(params.id),
   ]);
 
   if (!menuItem) notFound();
@@ -71,6 +92,7 @@ export default async function MenuDetailPage({
       blocks={detail.blocks}
       options={detail.options}
       benefitsData={benefitsData}
+      reviewData={reviewData}
     />
   );
 }
