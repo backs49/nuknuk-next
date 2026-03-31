@@ -29,6 +29,15 @@ export default function Footer() {
               <p>📍 경북 영천시 서문길 90 A동</p>
               <p>🚗 영천제일교회 맞은편 태평아파트 바로 앞</p>
               <p>🅿️ 매장 앞 주차 가능</p>
+              <p>
+                📞{" "}
+                <a
+                  href="tel:0507-1328-3934"
+                  className="hover:text-white transition-colors"
+                >
+                  0507.1328.3934
+                </a>
+              </p>
               <p>📅 100% 예약제 운영</p>
             </div>
           </div>
