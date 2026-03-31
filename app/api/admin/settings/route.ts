@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAllSettings, updateSetting } from '@/lib/settings-db'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/admin/settings — 전체 설정 조회
 export async function GET() {
   try {
