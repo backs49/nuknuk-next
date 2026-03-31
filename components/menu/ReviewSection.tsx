@@ -53,6 +53,9 @@ export default function ReviewSection({
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
+  // 라이트박스
+  const [lightbox, setLightbox] = useState<{ urls: string[]; index: number } | null>(null);
+
   const loadMore = async () => {
     setLoading(true);
     try {
@@ -158,18 +161,20 @@ export default function ReviewSection({
                 {review.imageUrls.length > 0 && (
                   <div className="flex gap-2 mb-2">
                     {review.imageUrls.map((url, i) => (
-                      <div
+                      <button
                         key={i}
-                        className="w-16 h-16 rounded-lg overflow-hidden relative"
+                        type="button"
+                        onClick={() => setLightbox({ urls: review.imageUrls, index: i })}
+                        className="w-20 h-20 rounded-lg overflow-hidden relative shrink-0 hover:opacity-90 transition-opacity"
                       >
                         <Image
                           src={url}
                           alt={`리뷰 사진 ${i + 1}`}
                           fill
                           className="object-cover"
-                          sizes="64px"
+                          sizes="80px"
                         />
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -200,6 +205,72 @@ export default function ReviewSection({
           </button>
         )}
       </div>
+
+      {/* 라이트박스 */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center"
+          onClick={() => setLightbox(null)}
+        >
+          {/* 닫기 */}
+          <button
+            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-white/80 hover:text-white text-2xl z-10"
+            onClick={() => setLightbox(null)}
+          >
+            ✕
+          </button>
+
+          {/* 이전 */}
+          {lightbox.urls.length > 1 && (
+            <button
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white/70 hover:text-white text-2xl z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightbox((prev) =>
+                  prev ? { ...prev, index: (prev.index - 1 + prev.urls.length) % prev.urls.length } : null
+                );
+              }}
+            >
+              ‹
+            </button>
+          )}
+
+          {/* 이미지 */}
+          <div
+            className="relative max-w-[90vw] max-h-[85vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Image
+              src={lightbox.urls[lightbox.index]}
+              alt={`리뷰 사진 ${lightbox.index + 1}`}
+              width={800}
+              height={800}
+              className="object-contain max-h-[85vh] rounded-lg"
+              sizes="90vw"
+            />
+            {lightbox.urls.length > 1 && (
+              <p className="text-center text-white/60 text-xs mt-2">
+                {lightbox.index + 1} / {lightbox.urls.length}
+              </p>
+            )}
+          </div>
+
+          {/* 다음 */}
+          {lightbox.urls.length > 1 && (
+            <button
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white/70 hover:text-white text-2xl z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightbox((prev) =>
+                  prev ? { ...prev, index: (prev.index + 1) % prev.urls.length } : null
+                );
+              }}
+            >
+              ›
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

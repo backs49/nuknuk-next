@@ -49,9 +49,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '전화번호가 일치하지 않습니다' }, { status: 400 })
   }
 
-  // 파일 크기 제한 (5MB)
-  if (file.size > 5 * 1024 * 1024) {
-    return NextResponse.json({ error: '파일 크기는 5MB 이하만 가능합니다' }, { status: 400 })
+  // 파일 크기 제한 (10MB)
+  if (file.size > 10 * 1024 * 1024) {
+    return NextResponse.json({ error: '파일 크기는 10MB 이하만 가능합니다' }, { status: 400 })
   }
 
   // MIME 타입 검증

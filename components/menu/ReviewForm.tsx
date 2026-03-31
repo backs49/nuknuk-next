@@ -54,7 +54,7 @@ export default function ReviewForm({
       const res = await fetch("/api/reviews/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderNumber: orderNumber.trim(), phone: phone.trim() }),
+        body: JSON.stringify({ orderNumber: `NUK-${orderNumber.trim()}`, phone: phone.replace(/-/g, "").trim() }),
       });
       const data = await res.json();
       if (!data.verified) {
@@ -102,18 +102,24 @@ export default function ReviewForm({
 
     setUploading(true);
     for (const file of Array.from(files)) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert(`${file.name}: 파일 크기는 10MB 이하만 가능합니다`);
+        continue;
+      }
       const formData = new FormData();
       formData.append("file", file);
       formData.append("orderId", orderId);
-      formData.append("phone", phone.trim());
+      formData.append("phone", phone.replace(/-/g, "").trim());
       try {
         const res = await fetch("/api/reviews/upload", { method: "POST", body: formData });
         const data = await res.json();
         if (data.url) {
           setImageUrls((prev) => [...prev, data.url]);
+        } else if (data.error) {
+          alert(data.error);
         }
       } catch {
-        // 개별 업로드 실패 무시
+        alert("이미지 업로드에 실패했습니다");
       }
     }
     setUploading(false);
@@ -179,18 +185,35 @@ export default function ReviewForm({
             주문번호와 전화번호를 입력하여 본인 확인 후 리뷰를 작성할 수 있습니다.
           </p>
           <div className="space-y-3">
-            <input
-              type="text"
-              placeholder="주문번호 (예: NUK-20260331-001)"
-              value={orderNumber}
-              onChange={(e) => setOrderNumber(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage-400/50"
-            />
+            <div className="flex items-center border border-gray-200 rounded-lg focus-within:ring-2 focus-within:ring-sage-400/50 overflow-hidden">
+              <span className="pl-3 pr-0.5 text-sm text-charcoal-400 font-medium select-none shrink-0">NUK-</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="20260331-001"
+                value={orderNumber}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/[^0-9]/g, "").slice(0, 11);
+                  if (digits.length <= 8) {
+                    setOrderNumber(digits);
+                  } else {
+                    setOrderNumber(digits.slice(0, 8) + "-" + digits.slice(8));
+                  }
+                }}
+                className="flex-1 py-2.5 pr-3 text-sm focus:outline-none bg-transparent"
+              />
+            </div>
             <input
               type="tel"
               placeholder="전화번호 (예: 010-1234-5678)"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/[^0-9]/g, "").slice(0, 11);
+                let formatted = digits.slice(0, 3);
+                if (digits.length > 3) formatted += "-" + digits.slice(3, 7);
+                if (digits.length > 7) formatted += "-" + digits.slice(7);
+                setPhone(formatted);
+              }}
               className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage-400/50"
             />
           </div>
