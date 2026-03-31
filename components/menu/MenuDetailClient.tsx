@@ -20,6 +20,8 @@ import ImageGallery from "./ImageGallery";
 import OptionSelector from "./OptionSelector";
 import DetailBlocks from "./DetailBlocks";
 import StickyOrderBar from "./StickyOrderBar";
+import BenefitsPreview from "./BenefitsPreview";
+import type { BenefitsData } from "./BenefitsPreview";
 
 interface MenuDetailClientProps {
   menuItem: DbMenuItem;
@@ -27,6 +29,7 @@ interface MenuDetailClientProps {
   images: MenuImage[];
   blocks: DetailBlock[];
   options: OptionGroup[];
+  benefitsData?: BenefitsData | null;
 }
 
 export default function MenuDetailClient({
@@ -35,6 +38,7 @@ export default function MenuDetailClient({
   images,
   blocks,
   options,
+  benefitsData,
 }: MenuDetailClientProps) {
   const [selectedOptions, setSelectedOptions] = useState<SelectedOption[]>([]);
 
@@ -165,6 +169,14 @@ export default function MenuDetailClient({
                     <p className="text-lg font-semibold text-blush-400">
                       상담 후 결정
                     </p>
+                  )}
+
+                  {benefitsData && (
+                    <BenefitsPreview
+                      benefitsData={benefitsData}
+                      basePrice={item.price}
+                      totalPrice={totalPrice}
+                    />
                   )}
                 </div>
               </div>

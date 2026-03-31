@@ -45,3 +45,4 @@ docs/
 CLAUDE.md
 .env.example
 supabase.md
+.superpowers/
