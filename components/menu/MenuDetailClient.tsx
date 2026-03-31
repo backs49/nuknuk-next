@@ -111,7 +111,7 @@ export default function MenuDetailClient({
                 category={item.category}
               />
               {/* Badges on image */}
-              {(item.isPopular || item.isNew) && (
+              {(item.isPopular || item.isNew || item.isConsultation) && (
                 <div className="absolute top-3 left-3 flex gap-2 z-10">
                   {item.isPopular && (
                     <span className="px-3 py-1 bg-sage-400 text-white text-xs font-bold rounded-full shadow-lg">
@@ -121,6 +121,11 @@ export default function MenuDetailClient({
                   {item.isNew && (
                     <span className="px-3 py-1 bg-blush-400 text-white text-xs font-bold rounded-full shadow-lg">
                       NEW
+                    </span>
+                  )}
+                  {item.isConsultation && (
+                    <span className="px-3 py-1 bg-blush-400 text-white text-xs font-bold rounded-full shadow-lg">
+                      상담 후 결정
                     </span>
                   )}
                 </div>
