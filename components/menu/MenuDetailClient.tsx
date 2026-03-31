@@ -222,6 +222,20 @@ export default function MenuDetailClient({
                 </div>
               )}
 
+              {/* PC consultation CTA */}
+              {item.isConsultation && (
+                <div className="mt-4">
+                  <a
+                    href="http://pf.kakao.com/_paCxdn"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full py-3.5 bg-[#FEE500] text-charcoal-400 rounded-2xl text-base font-semibold hover:brightness-95 transition-colors shadow-sm"
+                  >
+                    💬 상담하기 (카카오톡 채널)
+                  </a>
+                </div>
+              )}
+
               {/* PC inline order bar (replaces sticky bottom bar) */}
               {!item.isConsultation && (
                 <div className="hidden lg:block mt-4">
@@ -258,8 +272,19 @@ export default function MenuDetailClient({
         )}
       </div>
 
-      {/* Mobile sticky order bar */}
-      {!item.isConsultation && (
+      {/* Mobile sticky bottom bar */}
+      {item.isConsultation ? (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 px-4 py-3">
+          <a
+            href="http://pf.kakao.com/_paCxdn"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full py-3 bg-[#FEE500] text-charcoal-400 rounded-xl text-sm font-semibold hover:brightness-95 transition-colors"
+          >
+            💬 상담하기 (카카오톡 채널)
+          </a>
+        </div>
+      ) : (
         <div className="lg:hidden">
           <StickyOrderBar
             menuItem={{

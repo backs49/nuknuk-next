@@ -177,30 +177,13 @@ export default function MenuCard({ item, index }: MenuCardProps) {
 
         {/* 하단 버튼 영역 */}
         <div className="mt-auto pt-4">
-          {item.isConsultation ? (
-            /* 상담 상품 */
-            <a
-              href="http://pf.kakao.com/_paCxdn"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 w-full py-2.5 bg-[#FEE500] text-charcoal-400 rounded-lg text-sm font-medium hover:brightness-95 transition-colors"
-            >
-              💬 상담하기 (카카오톡 채널)
-            </a>
-          ) : (
-            /* 일반 상품 */
-            <div className="text-sm font-medium text-sage-400 text-right group-hover:translate-x-0.5 transition-transform">
-              상세보기 →
-            </div>
-          )}
+          <div className="text-sm font-medium text-sage-400 text-right group-hover:translate-x-0.5 transition-transform">
+            상세보기 →
+          </div>
         </div>
       </div>
     </motion.div>
   );
-
-  if (item.isConsultation) {
-    return cardContent;
-  }
 
   return (
     <Link href={`/menu/${item.id}`} className="block h-full">
