@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS reviews (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID NOT NULL REFERENCES orders(id),
-  menu_item_id UUID NOT NULL REFERENCES menu_items(id),
+  menu_item_id TEXT NOT NULL REFERENCES menu_items(id),
   customer_phone TEXT NOT NULL,
   customer_name TEXT NOT NULL,
   rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
