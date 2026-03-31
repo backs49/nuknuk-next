@@ -69,8 +69,8 @@ export default function AnnouncementBanner() {
         content
       )}
       <button
-        onClick={handleDismiss}
-        className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity text-sm"
+        onClick={(e) => { e.stopPropagation(); handleDismiss(); }}
+        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-6 h-6 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity text-sm"
         style={{ color: banner.textColor }}
         aria-label="오늘 하루 안보기"
         title="오늘 하루 안보기"
