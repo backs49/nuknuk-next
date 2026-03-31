@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import type { DbMenuItem } from "@/lib/menu-db";
 import { toMenuItem } from "@/lib/menu-db";
@@ -58,12 +58,47 @@ export default function MenuDetailClient({
   const effectiveIsValid =
     options.filter((g) => g.required).length === 0 ? true : isValid;
 
+  const [showCopyToast, setShowCopyToast] = useState(false);
+  const toastTimer = useRef<NodeJS.Timeout | null>(null);
+
   const handleSelectionChange = useCallback(
     (opts: SelectedOption[]) => {
       setSelectedOptions(opts);
     },
     []
   );
+
+  const handleConsultClick = useCallback(() => {
+    const lines: string[] = [];
+    lines.push(`[${item.name}] 상담 문의`);
+    if (!item.hidePrice) {
+      lines.push(`기본가: ${formatPrice(item.price)}`);
+    }
+    if (selectedOptions.length > 0) {
+      lines.push("");
+      lines.push("선택 옵션:");
+      selectedOptions.forEach((opt) => {
+        const priceText =
+          opt.price > 0
+            ? ` (+${formatPrice(opt.price)})`
+            : "";
+        lines.push(`- ${opt.groupName}: ${opt.itemName}${priceText}`);
+      });
+    }
+    lines.push("");
+    lines.push("위 상품에 대해 상담 부탁드립니다.");
+
+    const message = lines.join("\n");
+    navigator.clipboard.writeText(message).then(() => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+      setShowCopyToast(true);
+      toastTimer.current = setTimeout(() => setShowCopyToast(false), 3000);
+
+      setTimeout(() => {
+        window.open("http://pf.kakao.com/_paCxdn/chat", "_blank");
+      }, 300);
+    });
+  }, [item.name, item.price, item.hidePrice, selectedOptions]);
 
   const galleryImages = images.map((img) => ({
     id: img.id,
@@ -230,14 +265,15 @@ export default function MenuDetailClient({
               {/* PC consultation CTA */}
               {item.isConsultation && (
                 <div className="mt-4">
-                  <a
-                    href="http://pf.kakao.com/_paCxdn"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-3.5 bg-[#FEE500] text-charcoal-400 rounded-2xl text-base font-semibold hover:brightness-95 transition-colors shadow-sm"
+                  <button
+                    onClick={handleConsultClick}
+                    className="flex items-center justify-center gap-2 w-full py-3.5 bg-[#FEE500] text-charcoal-400 rounded-2xl text-base font-semibold hover:brightness-95 transition-colors shadow-sm cursor-pointer"
                   >
                     💬 상담하기 (카카오톡 채널)
-                  </a>
+                  </button>
+                  <p className="text-xs text-charcoal-200 text-center mt-2">
+                    옵션 선택 후 클릭하면 주문 정보가 자동 복사됩니다
+                  </p>
                 </div>
               )}
 
@@ -277,17 +313,22 @@ export default function MenuDetailClient({
         )}
       </div>
 
+      {/* Copy toast */}
+      {showCopyToast && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] px-5 py-3 bg-charcoal-400 text-white text-sm rounded-xl shadow-lg animate-fade-in">
+          주문 정보가 복사되었습니다. 카카오톡에서 붙여넣기 해주세요!
+        </div>
+      )}
+
       {/* Mobile sticky bottom bar */}
       {item.isConsultation ? (
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 px-4 py-3">
-          <a
-            href="http://pf.kakao.com/_paCxdn"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-3 bg-[#FEE500] text-charcoal-400 rounded-xl text-sm font-semibold hover:brightness-95 transition-colors"
+          <button
+            onClick={handleConsultClick}
+            className="flex items-center justify-center gap-2 w-full py-3 bg-[#FEE500] text-charcoal-400 rounded-xl text-sm font-semibold hover:brightness-95 transition-colors cursor-pointer"
           >
             💬 상담하기 (카카오톡 채널)
-          </a>
+          </button>
         </div>
       ) : (
         <div className="lg:hidden">
