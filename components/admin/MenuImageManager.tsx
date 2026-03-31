@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { resizeImage } from "@/lib/image-resize";
 
 const MAX_IMAGES = 8;
 
@@ -68,10 +69,13 @@ export default function MenuImageManager({
     setError("");
 
     try {
+      // 업로드 전 리사이즈 (Vercel 4.5MB body 제한 대응)
+      const resized = await resizeImage(file, 1920, 0.85);
+
       let uploadUrl = "/api/admin/upload";
       let uploadMethod = "POST";
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", resized);
 
       // Use the menu-specific endpoint if we have a real menuItemId
       if (menuItemId && menuItemId.trim() !== "") {

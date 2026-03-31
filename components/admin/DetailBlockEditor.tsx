@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { resizeImage } from "@/lib/image-resize";
 
 interface DetailBlock {
   type: "text" | "image";
@@ -86,8 +87,9 @@ export default function DetailBlockEditor({
   async function handleImageUpload(index: number, file: File) {
     setUploading(index);
     try {
+      const resized = await resizeImage(file, 1920, 0.85);
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", resized);
       const res = await fetch("/api/admin/upload", {
         method: "POST",
         body: formData,

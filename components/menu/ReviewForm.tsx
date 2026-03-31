@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Review } from "@/lib/review-db";
+import { resizeImage } from "@/lib/image-resize";
 
 interface ReviewFormProps {
   menuItemId: string;
@@ -106,8 +107,16 @@ export default function ReviewForm({
         alert(`${file.name}: 파일 크기는 10MB 이하만 가능합니다`);
         continue;
       }
+      // 업로드 전 리사이즈 (Vercel 4.5MB body 제한 대응)
+      let resized: File;
+      try {
+        resized = await resizeImage(file, 1280, 0.8);
+      } catch {
+        alert("이미지를 처리할 수 없습니다");
+        continue;
+      }
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", resized);
       formData.append("orderId", orderId);
       formData.append("phone", phone.replace(/-/g, "").trim());
       try {
