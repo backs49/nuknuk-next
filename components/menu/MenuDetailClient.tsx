@@ -99,13 +99,28 @@ export default function MenuDetailClient({
         <div className="lg:grid lg:grid-cols-2 lg:gap-10">
           {/* Left column: Image gallery */}
           <div>
-            <div className="lg:rounded-2xl lg:overflow-hidden lg:shadow-sm">
+            <div className="relative lg:rounded-2xl lg:overflow-hidden lg:shadow-sm">
               <ImageGallery
                 images={galleryImages}
                 fallbackImage={item.image}
                 menuName={item.name}
                 category={item.category}
               />
+              {/* Badges on image */}
+              {(item.isPopular || item.isNew) && (
+                <div className="absolute top-3 left-3 flex gap-2 z-10">
+                  {item.isPopular && (
+                    <span className="px-3 py-1 bg-sage-400 text-white text-xs font-bold rounded-full shadow-lg">
+                      인기
+                    </span>
+                  )}
+                  {item.isNew && (
+                    <span className="px-3 py-1 bg-blush-400 text-white text-xs font-bold rounded-full shadow-lg">
+                      NEW
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -115,24 +130,12 @@ export default function MenuDetailClient({
               {/* Basic info */}
               <div className="bg-white px-4 py-5 lg:rounded-2xl lg:shadow-sm lg:px-6">
                 <div className="max-w-lg mx-auto lg:max-w-none">
-                  {/* Category + badges */}
-                  <div className="flex items-center gap-2 mb-2">
-                    {category && (
-                      <span className="text-xs text-charcoal-200">
-                        {category.emoji} {category.name}
-                      </span>
-                    )}
-                    {item.isNew && (
-                      <span className="px-2 py-0.5 bg-blush-400 text-white text-[10px] font-bold rounded-full">
-                        NEW
-                      </span>
-                    )}
-                    {item.isPopular && (
-                      <span className="px-2 py-0.5 bg-sage-400 text-white text-[10px] font-bold rounded-full">
-                        인기
-                      </span>
-                    )}
-                  </div>
+                  {/* Category */}
+                  {category && (
+                    <p className="text-xs text-charcoal-200 mb-2">
+                      {category.emoji} {category.name}
+                    </p>
+                  )}
 
                   {/* Name */}
                   <h1 className="text-xl lg:text-2xl font-bold text-charcoal-400 mb-1">
