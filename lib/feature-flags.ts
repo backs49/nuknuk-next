@@ -6,3 +6,6 @@ export const COUPON_POINT_ENABLED =
 
 export const REVIEW_ENABLED =
   process.env.NEXT_PUBLIC_ENABLE_REVIEW === 'true'
+
+export const FAQ_ENABLED =
+  process.env.NEXT_PUBLIC_ENABLE_FAQ === 'true'
