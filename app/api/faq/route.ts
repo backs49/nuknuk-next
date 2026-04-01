@@ -1,15 +1,25 @@
 import { NextResponse } from 'next/server'
-import { getActiveFAQs } from '@/lib/faq-db'
+import { getSupabaseOrThrow } from '@/lib/db-utils'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const faqs = await getActiveFAQs()
-    return NextResponse.json({ faqs })
+    const supabase = getSupabaseOrThrow()
+
+    const { data, error, count } = await supabase
+      .from('faq_items')
+      .select('*', { count: 'exact' })
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+
+    if (error) {
+      return NextResponse.json({ faqs: [], debug: { error: error.message, code: error.code } })
+    }
+
+    return NextResponse.json({ faqs: data || [], debug: { count, rowCount: data?.length } })
   } catch (error) {
-    console.error('FAQ fetch error:', error)
     const message = error instanceof Error ? error.message : String(error)
-    return NextResponse.json({ faqs: [], error: message })
+    return NextResponse.json({ faqs: [], debug: { caught: message } })
   }
 }
