@@ -4,7 +4,7 @@ import { SessionProvider, useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { COUPON_POINT_ENABLED, REVIEW_ENABLED } from "@/lib/feature-flags";
+import { COUPON_POINT_ENABLED, REVIEW_ENABLED, FAQ_ENABLED } from "@/lib/feature-flags";
 
 // 인증이 필요 없는 경로
 const PUBLIC_PATHS = ["/admin/login"];
@@ -64,6 +64,9 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       ? [{ href: "/admin/reviews", label: "리뷰 관리", icon: "⭐" }]
       : []),
     { href: "/admin/banner", label: "공지 배너", icon: "📢" },
+    ...(FAQ_ENABLED
+      ? [{ href: "/admin/faq", label: "FAQ 관리", icon: "❓" }]
+      : []),
     ...(COUPON_POINT_ENABLED
       ? [
           { href: "/admin/customers", label: "고객 관리", icon: "👥" },

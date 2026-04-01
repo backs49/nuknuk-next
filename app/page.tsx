@@ -8,6 +8,8 @@ import InstagramFeed from "@/components/InstagramFeed";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import { getMenuItems, getCategories } from "@/lib/menu-db";
+import FAQSection from "@/components/FAQSection";
+import { FAQ_ENABLED } from "@/lib/feature-flags";
 
 export const revalidate = 60; // 60초마다 메뉴 데이터 재검증
 
@@ -26,6 +28,7 @@ export default async function Home() {
         <MenuSection items={menuItems} categories={categoryList} />
         <AboutSection />
         <LocationSection />
+        {FAQ_ENABLED && <FAQSection />}
         <InstagramFeed />
         <CTASection />
       </main>
