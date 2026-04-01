@@ -42,7 +42,7 @@ export async function getActiveFAQs(): Promise<FAQItem[]> {
   const { data, error } = await supabase
     .from('faq_items')
     .select('*')
-    .eq('is_active', true)
+    .is('is_active', true)
     .order('sort_order', { ascending: true })
 
   if (error) throw new Error(`FAQ 조회 실패: ${error.message}`)
