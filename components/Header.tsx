@@ -4,11 +4,13 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
+import { FAQ_ENABLED } from "@/lib/feature-flags";
 
 const navLinks = [
   { href: "#menu", label: "메뉴" },
   { href: "#about", label: "소개" },
   { href: "#location", label: "오시는 길" },
+  ...(FAQ_ENABLED ? [{ href: "#faq", label: "FAQ" }] : []),
   { href: "#instagram", label: "인스타그램" },
 ];
 
