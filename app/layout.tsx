@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display } from "next/font/google";
 import localFont from "next/font/local";
+import Script from "next/script";
 import "./globals.css";
 import CartProvider from "@/components/CartProvider";
 import CartSlidePanel from "@/components/CartSlidePanel";
@@ -83,6 +84,12 @@ export default function RootLayout({
           {children}
           <CartSlidePanel />
         </CartProvider>
+        <Script
+          src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js"
+          integrity="sha384-DKYJZ8NLiK8MN4/C5P2ezmFnkrysYIcMuWHo/Y6v1Hs9X2BfsDdnJo3fynkmLyA"
+          crossOrigin="anonymous"
+          strategy="lazyOnload"
+        />
       </body>
     </html>
   );

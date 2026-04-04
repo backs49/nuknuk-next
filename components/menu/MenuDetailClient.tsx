@@ -25,6 +25,7 @@ import type { BenefitsData } from "./BenefitsPreview";
 import ReviewSection from "./ReviewSection";
 import type { Review, ReviewSummary } from "@/lib/review-db";
 import { COUPON_POINT_ENABLED } from "@/lib/feature-flags";
+import ShareButtons from "./ShareButtons";
 
 interface MenuDetailClientProps {
   menuItem: DbMenuItem;
@@ -241,6 +242,18 @@ export default function MenuDetailClient({
                       상담 후 결정
                     </p>
                   )}
+
+                  <ShareButtons
+                    productName={item.name}
+                    description={item.description}
+                    imageUrl={
+                      galleryImages[0]?.imageUrl ||
+                      item.image ||
+                      ""
+                    }
+                    price={item.hidePrice ? null : item.price}
+                    productUrl={`https://nuknuk.vercel.app/menu/${dbMenuItem.id}`}
+                  />
 
                   {benefitsData && (
                     <BenefitsPreview
