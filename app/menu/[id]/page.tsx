@@ -31,7 +31,12 @@ export async function generateMetadata({
     openGraph: {
       title: `${menuItem.name} | 넉넉 디저트`,
       description: menuItem.description,
-      images: [imageUrl],
+      images: [{
+        url: imageUrl,
+        width: 1200,
+        height: 630,
+        alt: menuItem.name,
+      }],
       url: `https://nuknuk.vercel.app/menu/${params.id}`,
     },
   };

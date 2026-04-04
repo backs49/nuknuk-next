@@ -92,6 +92,8 @@ export default function ShareButtons({
       if (copyTimer.current) clearTimeout(copyTimer.current);
       setCopied(true);
       copyTimer.current = setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {
+      alert("링크 복사에 실패했습니다. 직접 주소를 복사해주세요.");
     });
   }, [productUrl]);
 

@@ -252,11 +252,7 @@ export default function MenuDetailClient({
                       ""
                     }
                     price={item.hidePrice ? null : item.price}
-                    productUrl={
-                      typeof window !== "undefined"
-                        ? window.location.href
-                        : ""
-                    }
+                    productUrl={`https://nuknuk.vercel.app/menu/${dbMenuItem.id}`}
                   />
 
                   {benefitsData && (
