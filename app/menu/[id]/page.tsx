@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getMenuItem, getCategories } from "@/lib/menu-db";
 import { getMenuDetail } from "@/lib/menu-option-db";
 import { notFound } from "next/navigation";
@@ -11,6 +12,30 @@ import { getReviewsByMenuItem, getReviewSummary } from "@/lib/review-db";
 import type { ReviewSummary, Review } from "@/lib/review-db";
 
 export const revalidate = 60;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}): Promise<Metadata> {
+  const menuItem = await getMenuItem(params.id);
+  if (!menuItem) return {};
+
+  const imageUrl =
+    menuItem.image ||
+    "https://images.unsplash.com/photo-1558301211-0d8c8ddee6ec?w=1200&h=630&fit=crop";
+
+  return {
+    title: `${menuItem.name} | 넉넉 디저트`,
+    description: menuItem.description,
+    openGraph: {
+      title: `${menuItem.name} | 넉넉 디저트`,
+      description: menuItem.description,
+      images: [imageUrl],
+      url: `https://nuknuk.vercel.app/menu/${params.id}`,
+    },
+  };
+}
 
 async function fetchBenefitsData(): Promise<BenefitsData | null> {
   if (!COUPON_POINT_ENABLED) return null;
