@@ -13,12 +13,14 @@ interface MenuItem {
   image?: string;
   isPopular?: boolean;
   isNew?: boolean;
+  isActive?: boolean;
 }
 
 export default function MenuListPage() {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
   const [categoryLabels, setCategoryLabels] = useState<
     Record<string, string>
@@ -65,6 +67,32 @@ export default function MenuListPage() {
       alert("삭제에 실패했습니다.");
     } finally {
       setDeleting(null);
+    }
+  }
+
+  async function handleToggleActive(id: string, current: boolean) {
+    const next = !current;
+    // Optimistic update
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, isActive: next } : item))
+    );
+    setTogglingId(id);
+
+    try {
+      const res = await fetch(`/api/admin/menu/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_active: next }),
+      });
+      if (!res.ok) throw new Error("toggle failed");
+    } catch {
+      // Rollback
+      setItems((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, isActive: current } : item))
+      );
+      alert("상태 변경에 실패했습니다.");
+    } finally {
+      setTogglingId(null);
     }
   }
 
@@ -138,7 +166,9 @@ export default function MenuListPage() {
                 {filteredItems.map((item) => (
                   <tr
                     key={item.id}
-                    className="border-b border-gray-50 hover:bg-gray-50/50 transition"
+                    className={`border-b border-gray-50 hover:bg-gray-50/50 transition ${
+                      item.isActive === false ? "opacity-50 border-l-4 border-l-gray-300" : ""
+                    }`}
                   >
                     <td className="px-4 sm:px-6 py-3 sm:py-4">
                       <div className="flex items-center gap-3">
@@ -181,7 +211,12 @@ export default function MenuListPage() {
                       </span>
                     </td>
                     <td className="px-4 sm:px-6 py-3 sm:py-4 text-center">
-                      <div className="flex justify-center gap-1">
+                      <div className="flex justify-center gap-1 flex-wrap">
+                        {item.isActive === false && (
+                          <span className="px-2 py-0.5 bg-gray-200 text-gray-600 text-xs rounded-full">
+                            숨김
+                          </span>
+                        )}
                         {item.isPopular && (
                           <span className="px-2 py-0.5 bg-sage-100 text-sage-500 text-xs rounded-full">
                             인기
@@ -200,7 +235,33 @@ export default function MenuListPage() {
                       </div>
                     </td>
                     <td className="px-4 sm:px-6 py-3 sm:py-4 text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleActive(item.id, item.isActive !== false)}
+                          disabled={togglingId === item.id}
+                          className={`relative inline-flex items-center gap-2 px-2 py-1 rounded-lg transition disabled:opacity-50 ${
+                            item.isActive !== false
+                              ? "text-sage-500 hover:bg-sage-50"
+                              : "text-gray-400 hover:bg-gray-100"
+                          }`}
+                          title={item.isActive !== false ? "클릭하면 숨김" : "클릭하면 공개"}
+                        >
+                          <span
+                            className={`relative inline-block w-8 h-4 rounded-full transition-colors ${
+                              item.isActive !== false ? "bg-sage-400" : "bg-gray-300"
+                            }`}
+                          >
+                            <span
+                              className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${
+                                item.isActive !== false ? "translate-x-4" : "translate-x-0"
+                              }`}
+                            />
+                          </span>
+                          <span className="text-xs font-medium">
+                            {item.isActive !== false ? "공개" : "숨김"}
+                          </span>
+                        </button>
                         <Link
                           href={`/admin/menu/${item.id}`}
                           className="px-3 py-1.5 text-xs text-charcoal-300 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
