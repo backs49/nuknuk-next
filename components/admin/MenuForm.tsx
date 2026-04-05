@@ -129,6 +129,7 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
     }
 
     try {
+      // 1. 본체 저장
       const url =
         mode === "create"
           ? "/api/admin/menu"
@@ -146,31 +147,38 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
         throw new Error(data.error || "저장 실패");
       }
 
-      // Save multi-images for edit mode
-      if (mode === "edit" && initialData?.id && images.length > 0) {
-        await fetch(`/api/admin/menu/${initialData.id}/images`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ images }),
-        });
-      }
+      // 2. savedId 확정 (create는 응답 id, edit는 initialData.id)
+      const saved = await res.json();
+      const savedId: string | undefined =
+        mode === "create" ? saved.id : initialData?.id;
 
-      // Save detail blocks for edit mode
-      if (mode === "edit" && initialData?.id) {
-        await fetch(`/api/admin/menu/${initialData.id}/detail-blocks`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ blocks }),
-        });
-      }
+      // 3. 서브리소스 저장 (create/edit 공통)
+      if (savedId) {
+        const subResults = await Promise.allSettled([
+          fetch(`/api/admin/menu/${savedId}/images`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ images }),
+          }),
+          fetch(`/api/admin/menu/${savedId}/detail-blocks`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ blocks }),
+          }),
+          fetch(`/api/admin/menu/${savedId}/options`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ groups: optionGroups }),
+          }),
+        ]);
 
-      // Save option groups for edit mode
-      if (mode === "edit" && initialData?.id) {
-        await fetch(`/api/admin/menu/${initialData.id}/options`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ groups: optionGroups }),
-        });
+        // 일부 실패 시 사용자에게 안내 (메뉴 본체는 이미 저장됨)
+        const failed = subResults.filter(
+          (r) => r.status === "rejected" || (r.status === "fulfilled" && !r.value.ok)
+        );
+        if (failed.length > 0) {
+          alert("메뉴 본체는 저장되었지만, 일부 상세 정보(이미지/상세/옵션) 저장에 실패했습니다. 메뉴 수정 페이지에서 다시 저장해주세요.");
+        }
       }
 
       router.push("/admin/menu");
