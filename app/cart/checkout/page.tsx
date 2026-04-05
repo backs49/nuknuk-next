@@ -20,6 +20,32 @@ type Step = "form" | "payment";
 export default function CartCheckoutPage() {
   const { items, totalPrice } = useCart();
 
+  const [unavailableIds, setUnavailableIds] = useState<Set<string>>(new Set());
+
+  // 페이지 마운트 시 availability 체크
+  useEffect(() => {
+    if (items.length === 0) {
+      setUnavailableIds(new Set());
+      return;
+    }
+    const ids = Array.from(new Set(items.map((i) => i.menuItemId)));
+    fetch("/api/menu/availability", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    })
+      .then((r) => r.json())
+      .then((data: { unavailableIds: string[] }) => {
+        setUnavailableIds(new Set(data.unavailableIds ?? []));
+      })
+      .catch(() => {
+        setUnavailableIds(new Set());
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const hasUnavailable = unavailableIds.size > 0;
+
   const [step, setStep] = useState<Step>("form");
   const [createdOrder, setCreatedOrder] = useState<CreatedOrder | null>(null);
 
@@ -111,6 +137,11 @@ export default function CartCheckoutPage() {
   }
 
   const handleSubmit = async () => {
+    // 판매 중단 상품 가드
+    if (hasUnavailable) {
+      setError("판매 중단된 상품을 장바구니에서 제거해주세요.");
+      return;
+    }
     if (!customerName.trim() || !customerPhone.trim()) {
       setError("이름과 전화번호를 입력해주세요.");
       return;
@@ -209,31 +240,57 @@ export default function CartCheckoutPage() {
         {/* 주문 상품 요약 */}
         <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
           <h2 className="font-bold text-charcoal-400 mb-4">주문 상품</h2>
-          {items.map((item) => (
-            <div key={item.menuItemId} className="flex justify-between py-2 border-b border-gray-50 last:border-0">
-              <div>
-                <span className="text-sm text-charcoal-400">{item.name}</span>
-                <span className="text-xs text-charcoal-100 ml-2">x {item.quantity}</span>
-                {item.selectedOptions && item.selectedOptions.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {item.selectedOptions.map((opt) => (
-                      <span key={opt.itemId} className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded">
-                        {opt.itemName}
+          {items.map((item) => {
+            const isUnavailable = unavailableIds.has(item.menuItemId);
+            return (
+              <div
+                key={item.menuItemId}
+                className={`flex justify-between py-2 border-b border-gray-50 last:border-0 ${
+                  isUnavailable ? "opacity-40" : ""
+                }`}
+              >
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm text-charcoal-400">{item.name}</span>
+                    <span className="text-xs text-charcoal-100">x {item.quantity}</span>
+                    {isUnavailable && (
+                      <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full font-medium">
+                        판매 중단
                       </span>
-                    ))}
+                    )}
                   </div>
-                )}
+                  {item.selectedOptions && item.selectedOptions.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {item.selectedOptions.map((opt) => (
+                        <span key={opt.itemId} className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded">
+                          {opt.itemName}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <span className={`text-sm font-medium ${isUnavailable ? "text-gray-400 line-through" : "text-charcoal-400"}`}>
+                  {formatPrice(item.price * item.quantity)}
+                </span>
               </div>
-              <span className="text-sm font-medium text-charcoal-400">
-                {formatPrice(item.price * item.quantity)}
-              </span>
-            </div>
-          ))}
+            );
+          })}
           <div className="flex justify-between pt-3 mt-2 border-t border-gray-200">
             <span className="font-bold text-charcoal-400">상품 합계</span>
             <span className="font-bold text-sage-400">{formatPrice(totalPrice)}</span>
           </div>
         </div>
+
+        {hasUnavailable && (
+          <div className="mb-6 px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
+            <p className="text-sm text-red-600 font-medium">
+              ⚠️ 판매 중단된 상품이 장바구니에 있습니다.
+            </p>
+            <p className="text-xs text-red-500 mt-1">
+              장바구니로 돌아가 해당 상품을 제거한 후 결제를 진행해주세요.
+            </p>
+          </div>
+        )}
 
         {/* 고객 정보 */}
         <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm space-y-4">
@@ -441,10 +498,10 @@ export default function CartCheckoutPage() {
         {/* 결제 버튼 */}
         <button
           onClick={handleSubmit}
-          disabled={isSubmitting}
-          className="w-full py-4 bg-sage-400 text-white rounded-xl font-bold text-base hover:bg-sage-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isSubmitting || hasUnavailable}
+          className={`w-full py-4 bg-sage-400 text-white rounded-xl font-bold text-base hover:bg-sage-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${hasUnavailable ? "opacity-50 cursor-not-allowed" : ""}`}
         >
-          {isSubmitting ? "처리 중..." : `${formatPrice(finalAmount)} 결제하기`}
+          {isSubmitting ? "처리 중..." : hasUnavailable ? "판매 중단 상품 제거 필요" : `${formatPrice(finalAmount)} 결제하기`}
         </button>
       </div>
     </div>
