@@ -152,6 +152,7 @@ export interface DbMenuItem {
   is_new: boolean;
   is_consultation: boolean;
   hide_price: boolean;
+  is_active: boolean;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -176,6 +177,7 @@ export function toMenuItem(
     isNew: db.is_new,
     isConsultation: db.is_consultation,
     hidePrice: db.hide_price,
+    isActive: db.is_active,
     images: images?.map((img) => ({
       id: img.id,
       imageUrl: img.image_url,
@@ -200,6 +202,7 @@ function toDbMenuItem(item: MenuItem, index: number): DbMenuItem {
     is_new: item.isNew ?? false,
     is_consultation: item.isConsultation ?? false,
     hide_price: item.hidePrice ?? false,
+    is_active: true,
     sort_order: index,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -211,8 +214,37 @@ export function isDbConnected(): boolean {
   return isSupabaseConfigured();
 }
 
-// 메뉴 전체 목록 조회 (DB 실패 시 정적 데이터 fallback)
+// 메뉴 전체 목록 조회 (공개용 — 활성 메뉴만, DB 실패 시 정적 데이터 fallback)
 export async function getMenuItems(): Promise<MenuItem[]> {
+  try {
+    const supabase = getServiceSupabase();
+    if (!supabase) return staticMenuItems;
+
+    const { data, error } = await supabase
+      .from("menu_items")
+      .select("*, menu_item_images(*), menu_option_groups(id)")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+
+    if (error) throw error;
+    if (!data || data.length === 0) return staticMenuItems;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return data.map((item: any) =>
+      toMenuItem(
+        item as DbMenuItem,
+        item.menu_item_images,
+        Array.isArray(item.menu_option_groups) && item.menu_option_groups.length > 0
+      )
+    );
+  } catch {
+    console.warn("Supabase 연결 실패, 정적 데이터 사용");
+    return staticMenuItems;
+  }
+}
+
+// 메뉴 전체 목록 조회 (관리자용 — 비활성 포함)
+export async function getAllMenuItems(): Promise<MenuItem[]> {
   try {
     const supabase = getServiceSupabase();
     if (!supabase) return staticMenuItems;
@@ -239,8 +271,29 @@ export async function getMenuItems(): Promise<MenuItem[]> {
   }
 }
 
-// 단일 메뉴 조회 (DB 실패 시 정적 데이터 fallback)
+// 단일 메뉴 조회 (공개용 — 활성 메뉴만, DB 실패 시 정적 데이터 fallback)
 export async function getMenuItem(id: string): Promise<DbMenuItem | null> {
+  const supabase = getServiceSupabase();
+
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("menu_items")
+      .select("*")
+      .eq("id", id)
+      .eq("is_active", true)
+      .single();
+
+    if (!error && data) return data;
+  }
+
+  // 정적 데이터에서 fallback 조회
+  const index = staticMenuItems.findIndex((item) => item.id === id);
+  if (index === -1) return null;
+  return toDbMenuItem(staticMenuItems[index], index);
+}
+
+// 단일 메뉴 조회 (관리자용 — 비활성 포함)
+export async function getMenuItemRaw(id: string): Promise<DbMenuItem | null> {
   const supabase = getServiceSupabase();
 
   if (supabase) {

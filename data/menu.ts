@@ -30,6 +30,7 @@ export interface MenuItem {
   isNew?: boolean; // 신메뉴 배지 표시
   isConsultation?: boolean; // 상담 상품 (장바구니 대신 카카오톡 채널 연결)
   hidePrice?: boolean; // 가격 숨김 (상담 상품에서 사용)
+  isActive?: boolean; // 공개 활성 여부 (비활성 시 공개 페이지에서 숨김)
   images?: { id: string; imageUrl: string; sortOrder: number }[];
   hasOptions?: boolean;
 }
