@@ -200,28 +200,42 @@ export default function OptionGroupEditor({
 
   async function handleCopyFrom(sourceMenuId: string) {
     setShowCopyDropdown(false);
+
+    // 기존 옵션이 있으면 confirm
+    if (groups.length > 0) {
+      const ok = confirm("기존 옵션 그룹을 모두 덮어쓰고 복사한 옵션으로 교체합니다. 계속할까요?");
+      if (!ok) return;
+    }
+
     try {
-      const res = await fetch(`/api/admin/menu/${menuItemId}/options/copy`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sourceMenuId }),
-      });
-      if (!res.ok) throw new Error("Copy failed");
-      // Reload options
-      const reloadRes = await fetch(`/api/admin/menu/${menuItemId}/options`);
-      if (reloadRes.ok) {
-        const resp = await reloadRes.json();
-        const data: OptionGroup[] = resp.options ?? [];
-        if (data.length > 0) {
-          const sorted = data
-            .map((g, i) => ({ ...g, sortOrder: i }))
-            .sort((a, b) => a.sortOrder - b.sortOrder);
-          setGroups(sorted);
-          onOptionsChange(sorted);
-        }
+      // 소스 메뉴의 옵션을 조회만 함 (DB 쓰기 없음)
+      const res = await fetch(`/api/admin/menu/${sourceMenuId}/options`);
+      if (!res.ok) throw new Error("Fetch failed");
+      const resp = await res.json();
+      const source: OptionGroup[] = resp.options ?? [];
+
+      if (source.length === 0) {
+        alert("복사할 옵션이 없는 메뉴입니다.");
+        return;
       }
+
+      // id 필드 제거 — 새 그룹으로 취급하기 위함
+      const cleaned: OptionGroup[] = source.map((g, i) => ({
+        name: g.name,
+        type: g.type,
+        required: g.required,
+        priceMode: g.priceMode,
+        sortOrder: i,
+        items: g.items.map((item, j) => ({
+          name: item.name,
+          price: item.price,
+          sortOrder: j,
+        })),
+      }));
+
+      notifyChange(cleaned);
     } catch {
-      // silently ignore
+      alert("옵션 복사에 실패했습니다.");
     }
   }
 
@@ -566,48 +580,46 @@ export default function OptionGroupEditor({
         )}
 
         {/* Copy from another menu */}
-        {menuItemId && (
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => {
-                if (!showCopyDropdown) {
-                  loadCopyMenuList();
-                } else {
-                  setShowCopyDropdown(false);
-                }
-              }}
-              disabled={copyLoading}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-600 border border-blue-300 bg-blue-50 rounded-lg hover:bg-blue-100 transition disabled:opacity-50"
-            >
-              {copyLoading ? "불러오는 중..." : "다른 메뉴에서 복사"}
-            </button>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => {
+              if (!showCopyDropdown) {
+                loadCopyMenuList();
+              } else {
+                setShowCopyDropdown(false);
+              }
+            }}
+            disabled={copyLoading}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-600 border border-blue-300 bg-blue-50 rounded-lg hover:bg-blue-100 transition disabled:opacity-50"
+          >
+            {copyLoading ? "불러오는 중..." : "다른 메뉴에서 복사"}
+          </button>
 
-            {showCopyDropdown && copyMenuList.length > 0 && (
-              <div className="absolute top-full mt-1 left-0 z-10 bg-white border border-gray-200 rounded-xl shadow-lg min-w-[200px] max-h-60 overflow-y-auto">
-                <div className="p-2">
-                  <p className="text-xs text-charcoal-100 px-2 pb-1">메뉴를 선택하면 해당 메뉴의 옵션을 복사합니다</p>
-                  {copyMenuList.map((menu) => (
-                    <button
-                      key={menu.id}
-                      type="button"
-                      onClick={() => handleCopyFrom(menu.id)}
-                      className="w-full text-left px-3 py-2 text-sm text-charcoal-300 hover:bg-gray-50 rounded-lg transition"
-                    >
-                      {menu.name}
-                    </button>
-                  ))}
-                </div>
+          {showCopyDropdown && copyMenuList.length > 0 && (
+            <div className="absolute top-full mt-1 left-0 z-10 bg-white border border-gray-200 rounded-xl shadow-lg min-w-[200px] max-h-60 overflow-y-auto">
+              <div className="p-2">
+                <p className="text-xs text-charcoal-100 px-2 pb-1">메뉴를 선택하면 해당 메뉴의 옵션을 복사합니다</p>
+                {copyMenuList.map((menu) => (
+                  <button
+                    key={menu.id}
+                    type="button"
+                    onClick={() => handleCopyFrom(menu.id)}
+                    className="w-full text-left px-3 py-2 text-sm text-charcoal-300 hover:bg-gray-50 rounded-lg transition"
+                  >
+                    {menu.name}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
+          )}
 
-            {showCopyDropdown && copyMenuList.length === 0 && !copyLoading && (
-              <div className="absolute top-full mt-1 left-0 z-10 bg-white border border-gray-200 rounded-xl shadow-lg min-w-[200px]">
-                <div className="p-4 text-sm text-charcoal-100">복사할 수 있는 메뉴가 없습니다.</div>
-              </div>
-            )}
-          </div>
-        )}
+          {showCopyDropdown && copyMenuList.length === 0 && !copyLoading && (
+            <div className="absolute top-full mt-1 left-0 z-10 bg-white border border-gray-200 rounded-xl shadow-lg min-w-[200px]">
+              <div className="p-4 text-sm text-charcoal-100">복사할 수 있는 메뉴가 없습니다.</div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
