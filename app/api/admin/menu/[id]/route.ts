@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import {
-  getMenuItem,
+  getMenuItemRaw,
   updateMenuItem,
   deleteMenuItem,
   deleteMenuImage,
 } from "@/lib/menu-db";
 
-// GET /api/admin/menu/[id] — 단일 메뉴 조회
+// GET /api/admin/menu/[id] — 단일 메뉴 조회 (비활성 포함)
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -18,7 +18,7 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const item = await getMenuItem(params.id);
+  const item = await getMenuItemRaw(params.id);
   if (!item) {
     return NextResponse.json({ error: "메뉴를 찾을 수 없습니다" }, { status: 404 });
   }
@@ -58,8 +58,7 @@ export async function DELETE(
   }
 
   try {
-    // 기존 이미지가 있으면 스토리지에서도 삭제
-    const existing = await getMenuItem(params.id);
+    const existing = await getMenuItemRaw(params.id);
     if (existing?.image) {
       await deleteMenuImage(existing.image);
     }

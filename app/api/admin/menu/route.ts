@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getMenuItems, createMenuItem } from "@/lib/menu-db";
+import { getAllMenuItems, createMenuItem } from "@/lib/menu-db";
 
-// GET /api/admin/menu — 메뉴 전체 조회
+// GET /api/admin/menu — 메뉴 전체 조회 (비활성 포함)
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -11,7 +11,7 @@ export async function GET() {
   }
 
   try {
-    const items = await getMenuItems();
+    const items = await getAllMenuItems();
     return NextResponse.json(items);
   } catch {
     return NextResponse.json(
