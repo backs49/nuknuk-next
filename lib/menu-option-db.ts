@@ -278,28 +278,6 @@ export async function saveMenuOptions(
   }
 }
 
-export async function copyOptionsFromMenu(
-  sourceMenuId: string,
-  targetMenuId: string
-): Promise<void> {
-  const sourceOptions = await getMenuOptions(sourceMenuId);
-
-  const saveFormat = sourceOptions.map((group) => ({
-    name: group.name,
-    type: group.type,
-    required: group.required,
-    priceMode: group.priceMode,
-    sortOrder: group.sortOrder,
-    items: group.items.map((item) => ({
-      name: item.name,
-      price: item.price,
-      sortOrder: item.sortOrder,
-    })),
-  }));
-
-  await saveMenuOptions(targetMenuId, saveFormat);
-}
-
 // ========== 배치 조회 ==========
 
 export async function getMenuDetail(menuItemId: string): Promise<{
