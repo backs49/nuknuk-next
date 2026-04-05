@@ -28,6 +28,7 @@ export interface MenuFormData {
   is_new: boolean;
   is_consultation: boolean;
   hide_price: boolean;
+  is_active: boolean;
   sort_order: number;
 }
 
@@ -72,6 +73,7 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
     is_new: initialData?.is_new || false,
     is_consultation: initialData?.is_consultation || false,
     hide_price: initialData?.hide_price || false,
+    is_active: initialData?.is_active ?? true,
     sort_order: initialData?.sort_order || 0,
   });
 
@@ -294,6 +296,22 @@ export default function MenuForm({ initialData, mode }: MenuFormProps) {
             </button>
           ))}
         </div>
+      </Section>
+
+      {/* 공개 설정 */}
+      <Section title="공개 설정">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={form.is_active}
+            onChange={(e) => updateField("is_active", e.target.checked)}
+            className="w-4 h-4 text-sage-400 rounded border-gray-300 focus:ring-sage-400"
+          />
+          <span className="text-sm text-charcoal-300">메뉴 공개</span>
+        </label>
+        <p className="text-xs text-charcoal-100 ml-6">
+          체크 시 사이트에 노출됩니다. 해제하면 일시적으로 숨겨집니다 (재료 소진, 휴무 등).
+        </p>
       </Section>
 
       {/* 배지 설정 */}

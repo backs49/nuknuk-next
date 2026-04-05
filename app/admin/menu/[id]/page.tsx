@@ -33,6 +33,7 @@ export default function EditMenuPage() {
           is_new: item.is_new || item.isNew || false,
           is_consultation: item.is_consultation || false,
           hide_price: item.hide_price || false,
+          is_active: item.is_active ?? true,
           sort_order: item.sort_order || 0,
         });
       })
