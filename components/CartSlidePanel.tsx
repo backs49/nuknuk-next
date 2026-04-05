@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "./CartProvider";
 import { formatPrice } from "@/data/menu";
@@ -35,7 +35,37 @@ function QuantityStepper({
 }
 
 export default function CartSlidePanel() {
-  const { items, removeItem, updateQuantity, totalItems, totalPrice, isCartOpen, closeCart } = useCart();
+  const { items, removeItem, updateQuantity, isCartOpen, closeCart } = useCart();
+
+  const [unavailableIds, setUnavailableIds] = useState<Set<string>>(new Set());
+
+  // 활성 상품만 집계 (비활성은 결제에서 제외)
+  const activeItems = items.filter((i) => !unavailableIds.has(i.menuItemId));
+  const totalItems = activeItems.reduce((sum, i) => sum + i.quantity, 0);
+  const totalPrice = activeItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const hasUnavailable = unavailableIds.size > 0;
+
+  // 장바구니 열릴 때 + items 변경 시 availability 체크
+  useEffect(() => {
+    if (!isCartOpen || items.length === 0) {
+      setUnavailableIds(new Set());
+      return;
+    }
+    const ids = Array.from(new Set(items.map((i) => i.menuItemId)));
+    fetch("/api/menu/availability", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    })
+      .then((r) => r.json())
+      .then((data: { unavailableIds: string[] }) => {
+        setUnavailableIds(new Set(data.unavailableIds ?? []));
+      })
+      .catch(() => {
+        // 네트워크 오류 시 빈 Set — 서버 안전망이 최종 방어
+        setUnavailableIds(new Set());
+      });
+  }, [isCartOpen, items]);
 
   // ESC key to close
   useEffect(() => {
@@ -109,55 +139,79 @@ export default function CartSlidePanel() {
                   </a>
                 </div>
               ) : (
-                items.map((item) => (
-                  <div key={`${item.menuItemId}-${item.optionKey || ""}`} className="py-3 border-b border-gray-50 last:border-0">
-                    <div className="flex justify-between mb-2">
-                      <div>
-                        <p className="font-semibold text-sm text-charcoal-400">{item.name}</p>
-                        <p className="text-xs text-charcoal-100 mt-0.5">
-                          {formatPrice(item.price)} / 개
-                        </p>
-                        {item.selectedOptions && item.selectedOptions.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {item.selectedOptions.map((opt) => (
-                              <span key={opt.itemId} className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded">
-                                {opt.itemName}
+                items.map((item) => {
+                  const isUnavailable = unavailableIds.has(item.menuItemId);
+                  return (
+                    <div
+                      key={`${item.menuItemId}-${item.optionKey || ""}`}
+                      className={`py-3 border-b border-gray-50 last:border-0 ${
+                        isUnavailable ? "opacity-40" : ""
+                      }`}
+                    >
+                      <div className="flex justify-between mb-2">
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-sm text-charcoal-400">{item.name}</p>
+                            {isUnavailable && (
+                              <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full font-medium">
+                                판매 중단
                               </span>
-                            ))}
+                            )}
                           </div>
-                        )}
+                          <p className={`text-xs mt-0.5 ${isUnavailable ? "text-gray-400" : "text-charcoal-100"}`}>
+                            {formatPrice(item.price)} / 개
+                          </p>
+                          {item.selectedOptions && item.selectedOptions.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {item.selectedOptions.map((opt) => (
+                                <span key={opt.itemId} className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded">
+                                  {opt.itemName}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => removeItem(item.menuItemId, item.optionKey)}
+                          className="text-gray-300 hover:text-red-400 text-sm"
+                          aria-label={`${item.name} 삭제`}
+                        >
+                          ✕
+                        </button>
                       </div>
-                      <button
-                        onClick={() => removeItem(item.menuItemId, item.optionKey)}
-                        className="text-gray-300 hover:text-red-400 text-sm"
-                        aria-label={`${item.name} 삭제`}
-                      >
-                        ✕
-                      </button>
+                      <div className="flex items-center justify-between">
+                        <div className={isUnavailable ? "pointer-events-none" : ""}>
+                          <QuantityStepper
+                            quantity={item.quantity}
+                            onChange={(q) => {
+                              if (q < 1) {
+                                removeItem(item.menuItemId, item.optionKey);
+                              } else {
+                                updateQuantity(item.menuItemId, q, item.optionKey);
+                              }
+                            }}
+                          />
+                        </div>
+                        <span className={`font-bold text-sm ${isUnavailable ? "text-gray-400 line-through" : "text-charcoal-400"}`}>
+                          {formatPrice(item.price * item.quantity)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <QuantityStepper
-                        quantity={item.quantity}
-                        onChange={(q) => {
-                          if (q < 1) {
-                            removeItem(item.menuItemId, item.optionKey);
-                          } else {
-                            updateQuantity(item.menuItemId, q, item.optionKey);
-                          }
-                        }}
-                      />
-                      <span className="font-bold text-sm text-charcoal-400">
-                        {formatPrice(item.price * item.quantity)}
-                      </span>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
             {/* Footer - checkout */}
             {items.length > 0 && (
               <div className="border-t border-gray-200 px-5 py-4">
+                {hasUnavailable && (
+                  <div className="mb-3 px-3 py-2 bg-red-50 border border-red-100 rounded-lg">
+                    <p className="text-xs text-red-600">
+                      판매 중단된 상품이 있습니다. 결제 금액에서 제외됩니다.
+                    </p>
+                  </div>
+                )}
                 <div className="flex justify-between mb-1">
                   <span className="text-sm text-charcoal-200">
                     상품 합계 ({totalItems}개)
@@ -172,13 +226,22 @@ export default function CartSlidePanel() {
                     {formatPrice(totalPrice)}
                   </span>
                 </div>
-                <Link
-                  href="/cart/checkout"
-                  onClick={closeCart}
-                  className="block w-full text-center py-3 bg-sage-400 text-white rounded-xl font-bold text-base hover:bg-sage-500 transition-colors"
-                >
-                  결제하기
-                </Link>
+                {totalItems > 0 ? (
+                  <Link
+                    href="/cart/checkout"
+                    onClick={closeCart}
+                    className="block w-full text-center py-3 bg-sage-400 text-white rounded-xl font-bold text-base hover:bg-sage-500 transition-colors"
+                  >
+                    결제하기
+                  </Link>
+                ) : (
+                  <button
+                    disabled
+                    className="block w-full text-center py-3 bg-gray-200 text-gray-400 rounded-xl font-bold text-base cursor-not-allowed"
+                  >
+                    결제 가능한 상품이 없습니다
+                  </button>
+                )}
               </div>
             )}
           </motion.div>
