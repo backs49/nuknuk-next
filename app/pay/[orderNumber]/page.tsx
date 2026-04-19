@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { PaymentWidgetInstance } from "@tosspayments/payment-widget-sdk";
 import Link from "next/link";
 
@@ -43,7 +44,25 @@ export default function PayOrderPage({
 }: {
   params: { orderNumber: string };
 }) {
-  const { orderNumber } = params;
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-cream-100 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4 text-charcoal-300">
+            <div className="w-12 h-12 border-4 border-sage-200 border-t-sage-400 rounded-full animate-spin" />
+            <p>주문 정보를 불러오는 중...</p>
+          </div>
+        </div>
+      }
+    >
+      <PayOrderPageInner orderNumber={params.orderNumber} />
+    </Suspense>
+  );
+}
+
+function PayOrderPageInner({ orderNumber }: { orderNumber: string }) {
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token") ?? "";
   const [pageState, setPageState] = useState<PageState>({ type: "loading" });
 
   const paymentWidgetRef = useRef<PaymentWidgetInstance | null>(null);
@@ -56,8 +75,14 @@ export default function PayOrderPage({
   // Fetch order
   useEffect(() => {
     async function fetchOrder() {
+      if (!token) {
+        setPageState({ type: "not_found" });
+        return;
+      }
       try {
-        const res = await fetch(`/api/orders/${orderNumber}`);
+        const res = await fetch(
+          `/api/orders/${orderNumber}?token=${encodeURIComponent(token)}`
+        );
         if (res.status === 404) {
           setPageState({ type: "not_found" });
           return;
@@ -82,7 +107,7 @@ export default function PayOrderPage({
       }
     }
     fetchOrder();
-  }, [orderNumber]);
+  }, [orderNumber, token]);
 
   // Initialize Toss payment widget when order is ready
   useEffect(() => {

@@ -20,7 +20,6 @@ export interface OrderFormData {
   pointUsed: number;
   couponId?: string;
   couponCode?: string;
-  customerId?: string;
   referralCode?: string;
   finalAmount: number;
 }
@@ -136,7 +135,6 @@ export default function OrderForm({ menuItem, category, selectedOptions, onSubmi
       pointUsed: discount.pointUsed,
       couponId: discount.couponId,
       couponCode: discount.couponCode,
-      customerId: discount.customerId,
       referralCode: discount.referralCode,
       finalAmount,
     });

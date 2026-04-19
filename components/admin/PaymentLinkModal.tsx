@@ -6,21 +6,24 @@ import { useRouter } from "next/navigation";
 interface PaymentLinkModalProps {
   orderNumber: string;
   totalAmount: number;
+  accessToken: string;
   onClose: () => void;
 }
 
 export default function PaymentLinkModal({
   orderNumber,
   totalAmount,
+  accessToken,
   onClose,
 }: PaymentLinkModalProps) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
 
+  const tokenQuery = `?token=${encodeURIComponent(accessToken)}`;
   const paymentUrl =
     typeof window !== "undefined"
-      ? `${window.location.origin}/pay/${orderNumber}`
-      : `/pay/${orderNumber}`;
+      ? `${window.location.origin}/pay/${orderNumber}${tokenQuery}`
+      : `/pay/${orderNumber}${tokenQuery}`;
 
   async function handleCopy() {
     try {

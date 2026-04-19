@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS orders (
   payment_key TEXT,
   payment_method TEXT,
   paid_at TIMESTAMPTZ,
+  access_token TEXT NOT NULL DEFAULT REPLACE(gen_random_uuid()::TEXT, '-', ''),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

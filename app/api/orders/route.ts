@@ -10,6 +10,7 @@ import type { CouponTemplate } from "@/data/customer";
 import { COUPON_POINT_ENABLED } from "@/lib/feature-flags";
 import { getMenuOptions } from "@/lib/menu-option-db";
 import { calculateOptionPrice, type SelectedOption } from "@/lib/option-utils";
+import { orderCreateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 interface OrderItemInput {
   menuItemId: string;
@@ -20,6 +21,9 @@ interface OrderItemInput {
 
 export async function POST(request: NextRequest) {
   try {
+    const { success, reset } = await orderCreateLimit.limit(getClientIp(request));
+    if (!success) return rateLimitResponse(reset);
+
     const body = await request.json();
     const {
       menuItemId,

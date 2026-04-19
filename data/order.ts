@@ -42,6 +42,7 @@ export interface Order {
   paymentKey: string | null;
   paymentMethod: string | null;
   paidAt: string | null;
+  accessToken: string;
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];
@@ -73,6 +74,7 @@ export interface DbOrder {
   payment_key: string | null;
   payment_method: string | null;
   paid_at: string | null;
+  access_token: string;
   created_at: string;
   updated_at: string;
 }
@@ -163,6 +165,7 @@ export function toOrder(dbOrder: DbOrder, dbItems: DbOrderItem[]): Order {
     paymentKey: dbOrder.payment_key,
     paymentMethod: dbOrder.payment_method,
     paidAt: dbOrder.paid_at,
+    accessToken: dbOrder.access_token,
     createdAt: dbOrder.created_at,
     updatedAt: dbOrder.updated_at,
     items: dbItems.map((item) => ({

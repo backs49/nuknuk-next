@@ -1,15 +1,23 @@
-// GET /api/orders/[orderNumber] — 주문 조회 (공개, 민감정보 제외)
+// GET /api/orders/[orderNumber]?token=xxx — 주문 조회 (공개)
+// access_token 미일치 시 404. 민감정보(admin_memo, payment_key)는 응답에서 제거.
 import { NextRequest, NextResponse } from "next/server";
-import { getOrderByNumber } from "@/lib/order-db";
+import { getOrderByNumberAndToken } from "@/lib/order-db";
+import { orderLookupLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { orderNumber: string } }
 ) {
   try {
+    const { success, reset } = await orderLookupLimit.limit(getClientIp(request));
+    if (!success) return rateLimitResponse(reset);
+
     const { orderNumber } = params;
-    const order = await getOrderByNumber(orderNumber);
+    const token = request.nextUrl.searchParams.get("token") || "";
+
+    const order = await getOrderByNumberAndToken(orderNumber, token);
     if (!order) {
+      // 토큰 불일치 / 존재하지 않음 모두 404로 통일 (존재 여부 누출 방지)
       return NextResponse.json(
         { error: "주문을 찾을 수 없습니다" },
         { status: 404 }
@@ -29,9 +37,9 @@ export async function GET(
       }
     }
 
-    // 민감 정보 제외 (adminMemo, paymentKey)
+    // 민감 정보 제외 (adminMemo, paymentKey, accessToken)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { adminMemo, paymentKey, ...publicOrder } = order;
+    const { adminMemo, paymentKey, accessToken, ...publicOrder } = order;
     return NextResponse.json({ order: publicOrder });
   } catch (error) {
     console.error("주문 조회 에러:", error);

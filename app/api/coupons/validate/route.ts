@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateCouponCode, calculateCouponDiscount } from '@/lib/coupon-db'
+import { couponValidateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   try {
+    const { success, reset } = await couponValidateLimit.limit(getClientIp(request))
+    if (!success) return rateLimitResponse(reset)
+
     const body = await request.json()
     const { code, totalAmount, shippingFee } = body
 

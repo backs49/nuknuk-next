@@ -10,7 +10,6 @@ export interface DiscountData {
   pointUsed: number;
   couponId?: string;
   couponCode?: string;
-  customerId?: string;
   referralCode?: string;
 }
 
@@ -23,12 +22,9 @@ interface CouponPointSectionProps {
 
 interface LookupResult {
   customer: {
-    id: string;
-    name: string | null;
     pointBalance: number;
     referralCode: string | null;
-    referredBy: string | null;
-    totalOrders: number;
+    canUseReferralCode: boolean;
   } | null;
   coupons: CustomerCoupon[];
   pointBalance: number;
@@ -74,11 +70,10 @@ export default function CouponPointSection({
         pointUsed: pUsed,
         couponId: overrides?.couponId ?? (codeTemplate ? undefined : selectedCouponId ?? undefined),
         couponCode: overrides?.couponCode ?? (codeTemplate ? couponCode : undefined),
-        customerId: lookupResult?.customer?.id,
         referralCode: referralCode || undefined,
       });
     },
-    [pointUsed, couponDiscount, selectedCouponId, couponCode, codeTemplate, lookupResult, referralCode, onDiscountChange]
+    [pointUsed, couponDiscount, selectedCouponId, couponCode, codeTemplate, referralCode, onDiscountChange]
   );
 
   // 혜택 조회
@@ -115,7 +110,6 @@ export default function CouponPointSection({
       couponDiscount: disc,
       pointUsed,
       couponId: coupon.id,
-      customerId: lookupResult?.customer?.id,
       referralCode: referralCode || undefined,
     });
   };
@@ -126,7 +120,6 @@ export default function CouponPointSection({
     onDiscountChange({
       couponDiscount: 0,
       pointUsed,
-      customerId: lookupResult?.customer?.id,
       referralCode: referralCode || undefined,
     });
   };
@@ -153,8 +146,7 @@ export default function CouponPointSection({
           couponDiscount: data.discount,
           pointUsed,
           couponCode,
-          customerId: lookupResult?.customer?.id,
-          referralCode: referralCode || undefined,
+            referralCode: referralCode || undefined,
         });
       } else {
         setCodeError(data.reason || "유효하지 않은 쿠폰입니다");
@@ -183,7 +175,6 @@ export default function CouponPointSection({
       pointUsed: clamped,
       couponId: codeTemplate ? undefined : selectedCouponId ?? undefined,
       couponCode: codeTemplate ? couponCode : undefined,
-      customerId: lookupResult?.customer?.id,
       referralCode: referralCode || undefined,
     });
   };
@@ -199,7 +190,6 @@ export default function CouponPointSection({
       pointUsed: max,
       couponId: codeTemplate ? undefined : selectedCouponId ?? undefined,
       couponCode: codeTemplate ? couponCode : undefined,
-      customerId: lookupResult?.customer?.id,
       referralCode: referralCode || undefined,
     });
   };
@@ -426,8 +416,7 @@ export default function CouponPointSection({
       {/* 추천 코드 — 추천인 미등록 + 첫 주문인 고객에게만 표시 */}
       {lookupDone &&
         lookupResult?.customer &&
-        !lookupResult.customer.referredBy &&
-        lookupResult.customer.totalOrders === 0 && (
+        lookupResult.customer.canUseReferralCode && (
         <div className="space-y-2">
           <p className="text-sm font-medium text-charcoal-300">추천 코드 (선택)</p>
           <input

@@ -26,6 +26,7 @@ interface OrderItem {
 interface CreatedOrder {
   orderNumber: string;
   totalAmount: number;
+  accessToken: string;
 }
 
 export default function OrderCreateForm() {
@@ -281,6 +282,7 @@ export default function OrderCreateForm() {
       setCreatedOrder({
         orderNumber: data.order.orderNumber,
         totalAmount: data.order.totalAmount,
+        accessToken: data.order.accessToken,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "주문 등록에 실패했습니다.");
@@ -685,6 +687,7 @@ export default function OrderCreateForm() {
         <PaymentLinkModal
           orderNumber={createdOrder.orderNumber}
           totalAmount={createdOrder.totalAmount}
+          accessToken={createdOrder.accessToken}
           onClose={() => setCreatedOrder(null)}
         />
       )}

@@ -1,4 +1,5 @@
 // lib/order-db.ts
+import { randomBytes } from "crypto";
 import { getSupabaseOrThrow } from "./db-utils";
 import {
   type DbOrder,
@@ -8,6 +9,11 @@ import {
   type Order,
   toOrder,
 } from "@/data/order";
+
+// 공개 주문 조회용 토큰 (32자 hex, enumeration 방지)
+function generateAccessToken(): string {
+  return randomBytes(16).toString("hex");
+}
 
 // 주문 생성
 export async function createOrder(input: CreateOrderInput): Promise<Order> {
@@ -46,6 +52,7 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
       point_used: pointUsed,
       point_earned: input.pointEarned || 0,
       final_amount: finalAmount,
+      access_token: generateAccessToken(),
     })
     .select()
     .single();
@@ -72,7 +79,7 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
   return toOrder(order as DbOrder, items as DbOrderItem[]);
 }
 
-// 주문번호로 주문 조회 (공개용)
+// 주문번호로 주문 조회 (서버 내부용 — 토큰 검증 없음. 결제 승인 콜백 등에서만 사용)
 export async function getOrderByNumber(
   orderNumber: string
 ): Promise<Order | null> {
@@ -82,6 +89,31 @@ export async function getOrderByNumber(
     .from("orders")
     .select()
     .eq("order_number", orderNumber)
+    .single();
+
+  if (error || !order) return null;
+
+  const { data: items } = await supabase
+    .from("order_items")
+    .select()
+    .eq("order_id", order.id);
+
+  return toOrder(order as DbOrder, (items || []) as DbOrderItem[]);
+}
+
+// 공개 API 용 — order_number + access_token 둘 다 일치해야 조회 성공
+export async function getOrderByNumberAndToken(
+  orderNumber: string,
+  accessToken: string
+): Promise<Order | null> {
+  if (!orderNumber || !accessToken) return null;
+  const supabase = getSupabaseOrThrow();
+
+  const { data: order, error } = await supabase
+    .from("orders")
+    .select()
+    .eq("order_number", orderNumber)
+    .eq("access_token", accessToken)
     .single();
 
   if (error || !order) return null;
