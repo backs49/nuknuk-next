@@ -2,6 +2,7 @@
 // 리뷰 CRUD, 별점 요약, 포인트 연동
 
 import { getSupabaseOrThrow } from './db-utils'
+import { UserFacingError } from './api-error'
 
 export interface DbReview {
   id: string
@@ -143,7 +144,7 @@ export async function createReview(input: {
     .single()
 
   if (error) {
-    if (error.code === '23505') throw new Error('이미 해당 상품에 리뷰를 작성하셨습니다')
+    if (error.code === '23505') throw new UserFacingError('이미 해당 상품에 리뷰를 작성하셨습니다', 409)
     throw new Error(`리뷰 작성 실패: ${error.message}`)
   }
   return toReview(data as DbReview)

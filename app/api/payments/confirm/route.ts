@@ -6,6 +6,7 @@ import { sendKakaoAlimtalk } from "@/lib/kakao-notification";
 import { spendPoints } from "@/lib/point-db";
 import { applyCoupon, applyCodeCoupon, validateCouponCode } from "@/lib/coupon-db";
 import { COUPON_POINT_ENABLED } from "@/lib/feature-flags";
+import { apiError } from "@/lib/api-error";
 import type { Order } from "@/data/order";
 
 // 디스코드 푸시 알림 함수
@@ -157,11 +158,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data });
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "서버 내부 오류";
-    return NextResponse.json(
-      { message: errorMessage, code: "INTERNAL_SERVER_ERROR" },
-      { status: 500 }
-    );
+    return apiError(err, "결제 승인에 실패했습니다", 500, "payments/confirm");
   }
 }
 

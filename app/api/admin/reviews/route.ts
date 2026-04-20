@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getAdminReviews } from '@/lib/review-db'
+import { apiError } from '@/lib/api-error'
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -17,7 +18,6 @@ export async function GET(req: NextRequest) {
     const result = await getAdminReviews({ filter, page, limit })
     return NextResponse.json(result)
   } catch (err) {
-    const message = err instanceof Error ? err.message : '조회 실패'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return apiError(err, '조회에 실패했습니다', 500, 'admin/reviews/list')
   }
 }

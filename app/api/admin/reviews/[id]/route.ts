@@ -6,6 +6,7 @@ import { setAdminReply, toggleReviewVisibility, getReviewById, deleteReview } fr
 import { COUPON_POINT_ENABLED } from '@/lib/feature-flags'
 import { deductPoints } from '@/lib/point-db'
 import { getSupabaseOrThrow } from '@/lib/db-utils'
+import { apiError } from '@/lib/api-error'
 
 // PATCH: 답글 작성 또는 숨김 토글
 export async function PATCH(
@@ -27,8 +28,7 @@ export async function PATCH(
     }
     return NextResponse.json({ success: true })
   } catch (err) {
-    const message = err instanceof Error ? err.message : '업데이트 실패'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return apiError(err, '업데이트에 실패했습니다', 500, 'admin/reviews/patch')
   }
 }
 
@@ -75,7 +75,6 @@ export async function DELETE(
     await deleteReview(id)
     return NextResponse.json({ success: true })
   } catch (err) {
-    const message = err instanceof Error ? err.message : '삭제 실패'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return apiError(err, '삭제에 실패했습니다', 500, 'admin/reviews/delete')
   }
 }

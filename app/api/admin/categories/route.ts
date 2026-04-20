@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCategoriesRaw, createCategory, getCategories } from "@/lib/menu-db";
+import { apiError } from "@/lib/api-error";
 
 // GET /api/admin/categories — 카테고리 전체 조회
 export async function GET() {
@@ -40,9 +41,6 @@ export async function POST(request: NextRequest) {
     const category = await createCategory(body);
     return NextResponse.json(category, { status: 201 });
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "카테고리 추가 실패" },
-      { status: 500 }
-    );
+    return apiError(err, "카테고리 추가에 실패했습니다", 500, "admin/categories/create");
   }
 }

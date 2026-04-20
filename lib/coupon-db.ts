@@ -2,6 +2,7 @@
 // 쿠폰 템플릿 CRUD, 발급, 검증, 자동 트리거
 
 import { getSupabaseOrThrow } from './db-utils'
+import { UserFacingError } from './api-error'
 import {
   DbCouponTemplate, CouponTemplate, toCouponTemplate,
   DbCustomerCoupon, CustomerCoupon, toCustomerCoupon,
@@ -154,11 +155,11 @@ export async function issueCoupon(
     .eq('id', templateId)
     .single()
 
-  if (tErr || !template) throw new Error('쿠폰 템플릿을 찾을 수 없습니다')
+  if (tErr || !template) throw new UserFacingError('쿠폰 템플릿을 찾을 수 없습니다', 404)
 
   // max_issues 체크
   if (template.max_issues && template.issued_count >= template.max_issues) {
-    throw new Error('쿠폰 발급 한도에 도달했습니다')
+    throw new UserFacingError('쿠폰 발급 한도에 도달했습니다', 409)
   }
 
   // expires_at 계산
@@ -264,7 +265,7 @@ export async function applyCodeCoupon(
     .eq('customer_id', customerId)
     .eq('template_id', templateId)
     .single()
-  if (existing.data) throw new Error('이미 사용한 쿠폰 코드입니다')
+  if (existing.data) throw new UserFacingError('이미 사용한 쿠폰 코드입니다', 409)
 
   // 발급 + 즉시 사용
   const { data: coupon, error } = await supabase

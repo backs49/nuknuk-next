@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { reorderFAQs } from '@/lib/faq-db'
+import { apiError } from '@/lib/api-error'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,7 +22,6 @@ export async function PUT(request: NextRequest) {
     await reorderFAQs(orderedIds)
     return NextResponse.json({ success: true })
   } catch (error) {
-    const message = error instanceof Error ? error.message : '순서 변경 실패'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return apiError(error, '순서 변경에 실패했습니다', 500, 'admin/faq/reorder')
   }
 }

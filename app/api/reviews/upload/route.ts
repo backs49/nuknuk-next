@@ -71,7 +71,8 @@ export async function POST(req: NextRequest) {
     })
 
   if (error) {
-    return NextResponse.json({ error: `업로드 실패: ${error.message}` }, { status: 500 })
+    console.error('[API:reviews/upload]', error)
+    return NextResponse.json({ error: '업로드에 실패했습니다' }, { status: 500 })
   }
 
   const { data: { publicUrl } } = supabase.storage

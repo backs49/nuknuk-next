@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { addPoints, deductPoints } from "@/lib/point-db";
+import { apiError } from "@/lib/api-error";
 
 export async function POST(
   request: NextRequest,
@@ -43,8 +44,6 @@ export async function POST(
       return NextResponse.json({ error: "유효하지 않은 type" }, { status: 400 });
     }
   } catch (error) {
-    console.error("포인트 조정 에러:", error);
-    const message = error instanceof Error ? error.message : "포인트 조정 실패";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(error, "포인트 조정에 실패했습니다", 500, "admin/customers/points");
   }
 }

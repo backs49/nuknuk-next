@@ -42,7 +42,7 @@ function SuccessContent() {
         } else {
           const data = await response.json();
           setStatus("error");
-          setErrorMessage(data?.message || "결제 승인 처리 중 오류가 발생했습니다.");
+          setErrorMessage(data?.error || data?.message || "결제 승인 처리 중 오류가 발생했습니다.");
         }
       } catch (err) {
         console.error(err);

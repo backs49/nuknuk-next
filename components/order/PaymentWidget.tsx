@@ -81,7 +81,7 @@ export default function PaymentWidget({
       if (data.success) {
         window.location.href = `/pay/success?orderId=${orderNumber}&amount=0`;
       } else {
-        setErrorMessage(data.message || "결제 처리에 실패했습니다");
+        setErrorMessage(data.error || data.message || "결제 처리에 실패했습니다");
         setIsRequesting(false);
       }
     } catch {

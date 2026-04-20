@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCouponTemplateById, updateCouponTemplate } from "@/lib/coupon-db";
+import { apiError } from "@/lib/api-error";
 
 export async function GET(
   request: NextRequest,
@@ -38,8 +39,6 @@ export async function PUT(
     const template = await updateCouponTemplate(params.id, body);
     return NextResponse.json({ template });
   } catch (error) {
-    console.error("쿠폰 템플릿 수정 에러:", error);
-    const message = error instanceof Error ? error.message : "쿠폰 수정 실패";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError(error, "쿠폰 수정에 실패했습니다", 500, "admin/coupons/update");
   }
 }

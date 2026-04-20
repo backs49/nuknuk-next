@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { updateFAQ, deleteFAQ } from '@/lib/faq-db'
+import { apiError } from '@/lib/api-error'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,8 +21,7 @@ export async function PUT(
     const faq = await updateFAQ(id, body)
     return NextResponse.json({ faq })
   } catch (error) {
-    const message = error instanceof Error ? error.message : '수정 실패'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return apiError(error, 'FAQ 수정에 실패했습니다', 500, 'admin/faq/update')
   }
 }
 
@@ -39,7 +39,6 @@ export async function DELETE(
     await deleteFAQ(id)
     return NextResponse.json({ success: true })
   } catch (error) {
-    const message = error instanceof Error ? error.message : '삭제 실패'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return apiError(error, 'FAQ 삭제에 실패했습니다', 500, 'admin/faq/delete')
   }
 }

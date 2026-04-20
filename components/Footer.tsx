@@ -68,7 +68,15 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-white/10 pt-6 text-center text-xs text-white/30">
+        <div className="border-t border-white/10 pt-6 text-center text-xs text-white/30 space-y-2">
+          <div className="space-x-4">
+            <Link
+              href="/privacy"
+              className="hover:text-white transition-colors"
+            >
+              개인정보 처리방침
+            </Link>
+          </div>
           <p>© {new Date().getFullYear()} 넉넉 디저트 (Nuknuk Dessert). All rights reserved.</p>
         </div>
       </div>

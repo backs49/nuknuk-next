@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getAllFAQs, createFAQ } from '@/lib/faq-db'
+import { apiError } from '@/lib/api-error'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,8 +15,7 @@ export async function GET() {
     const faqs = await getAllFAQs()
     return NextResponse.json({ faqs })
   } catch (error) {
-    const message = error instanceof Error ? error.message : '조회 실패'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return apiError(error, 'FAQ 조회에 실패했습니다', 500, 'admin/faq/list')
   }
 }
 
@@ -35,7 +35,6 @@ export async function POST(request: NextRequest) {
     const faq = await createFAQ({ question: question.trim(), answer: answer.trim() })
     return NextResponse.json({ faq })
   } catch (error) {
-    const message = error instanceof Error ? error.message : '추가 실패'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return apiError(error, 'FAQ 추가에 실패했습니다', 500, 'admin/faq/create')
   }
 }

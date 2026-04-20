@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getCategory, updateCategory, deleteCategory } from "@/lib/menu-db";
+import { apiError } from "@/lib/api-error";
 
 // GET /api/admin/categories/[id] — 단일 카테고리 조회
 export async function GET(
@@ -45,10 +46,7 @@ export async function PUT(
     const category = await updateCategory(params.id, body);
     return NextResponse.json(category);
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "카테고리 수정 실패" },
-      { status: 500 }
-    );
+    return apiError(err, "카테고리 수정에 실패했습니다", 500, "admin/categories/update");
   }
 }
 
@@ -66,9 +64,6 @@ export async function DELETE(
     await deleteCategory(params.id);
     return NextResponse.json({ success: true });
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "카테고리 삭제 실패" },
-      { status: 500 }
-    );
+    return apiError(err, "카테고리 삭제에 실패했습니다", 500, "admin/categories/delete");
   }
 }

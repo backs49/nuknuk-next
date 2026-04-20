@@ -6,6 +6,7 @@ import { createReview, getReviewsByMenuItem } from '@/lib/review-db'
 import { getSettingNumber } from '@/lib/settings-db'
 import { addPoints } from '@/lib/point-db'
 import { getSupabaseOrThrow } from '@/lib/db-utils'
+import { apiError } from '@/lib/api-error'
 
 // GET: 상품별 리뷰 목록 (더보기용)
 export async function GET(req: NextRequest) {
@@ -110,7 +111,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ review, pointRewarded })
   } catch (err) {
-    const message = err instanceof Error ? err.message : '리뷰 작성에 실패했습니다'
-    return NextResponse.json({ error: message }, { status: 400 })
+    return apiError(err, '리뷰 작성에 실패했습니다', 400, 'reviews/create')
   }
 }
