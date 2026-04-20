@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createOrder, getOrders } from "@/lib/order-db";
+import { validateOrderInputLengths } from "@/lib/input-limits";
+import { apiError } from "@/lib/api-error";
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -39,6 +41,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
+
+    // 자유 입력 필드 길이 제한
+    validateOrderInputLengths(body);
+
     const {
       customerName,
       customerPhone,
@@ -75,10 +81,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ order });
   } catch (error) {
-    console.error("주문 등록 에러:", error);
-    return NextResponse.json(
-      { error: "주문 등록에 실패했습니다" },
-      { status: 500 }
-    );
+    return apiError(error, "주문 등록에 실패했습니다", 500, "admin/orders/create");
   }
 }

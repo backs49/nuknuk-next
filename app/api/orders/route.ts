@@ -11,6 +11,8 @@ import { COUPON_POINT_ENABLED } from "@/lib/feature-flags";
 import { getMenuOptions } from "@/lib/menu-option-db";
 import { calculateOptionPrice, type SelectedOption } from "@/lib/option-utils";
 import { orderCreateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
+import { validateOrderInputLengths } from "@/lib/input-limits";
+import { apiError } from "@/lib/api-error";
 
 interface OrderItemInput {
   menuItemId: string;
@@ -25,6 +27,10 @@ export async function POST(request: NextRequest) {
     if (!success) return rateLimitResponse(reset);
 
     const body = await request.json();
+
+    // 자유 입력 필드 길이 제한
+    validateOrderInputLengths(body);
+
     const {
       menuItemId,
       quantity,
@@ -197,10 +203,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ order, appliedTemplate });
   } catch (error) {
-    console.error("주문 생성 에러:", error);
-    return NextResponse.json(
-      { error: "주문 생성에 실패했습니다" },
-      { status: 500 }
-    );
+    return apiError(error, "주문 생성에 실패했습니다", 500, "orders/create");
   }
 }

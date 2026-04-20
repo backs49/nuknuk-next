@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCustomerByPhone } from '@/lib/customer-db'
 import { getCustomerCoupons } from '@/lib/coupon-db'
 import { customerLookupLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
+import { INPUT_LIMITS } from '@/lib/input-limits'
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,6 +20,9 @@ export async function GET(request: NextRequest) {
     const phone = request.nextUrl.searchParams.get('phone')
     if (!phone) {
       return NextResponse.json({ error: '전화번호가 필요합니다' }, { status: 400 })
+    }
+    if (phone.length > INPUT_LIMITS.customerPhone) {
+      return NextResponse.json({ error: '전화번호 형식이 올바르지 않습니다' }, { status: 400 })
     }
 
     const customer = await getCustomerByPhone(phone)

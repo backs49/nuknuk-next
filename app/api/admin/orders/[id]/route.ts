@@ -5,6 +5,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getOrderById, updateOrderStatus, updateOrderMemo } from "@/lib/order-db";
 import { onOrderCompleted, onOrderCancelled } from "@/lib/order-hooks";
+import { assertMaxLength, INPUT_LIMITS } from "@/lib/input-limits";
+import { apiError } from "@/lib/api-error";
 
 export async function GET(
   request: NextRequest,
@@ -60,6 +62,7 @@ export async function PUT(
     }
 
     if (adminMemo !== undefined) {
+      assertMaxLength(adminMemo, INPUT_LIMITS.adminMemo, "관리자 메모");
       await updateOrderMemo(params.id, adminMemo);
       const order = await getOrderById(params.id);
       return NextResponse.json({ order });
@@ -70,10 +73,6 @@ export async function PUT(
       { status: 400 }
     );
   } catch (error) {
-    console.error("주문 수정 에러:", error);
-    return NextResponse.json(
-      { error: "주문 수정에 실패했습니다" },
-      { status: 500 }
-    );
+    return apiError(error, "주문 수정에 실패했습니다", 500, "admin/orders/update");
   }
 }

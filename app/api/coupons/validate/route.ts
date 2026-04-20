@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateCouponCode, calculateCouponDiscount } from '@/lib/coupon-db'
 import { couponValidateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
+import { INPUT_LIMITS } from '@/lib/input-limits'
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,8 +11,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { code, totalAmount, shippingFee } = body
 
-    if (!code) {
+    if (!code || typeof code !== 'string') {
       return NextResponse.json({ valid: false, reason: '쿠폰 코드를 입력해주세요' })
+    }
+    if (code.length > INPUT_LIMITS.couponCode) {
+      return NextResponse.json({ valid: false, reason: '쿠폰 코드 형식이 올바르지 않습니다' })
     }
 
     const template = await validateCouponCode(code)
