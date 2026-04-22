@@ -5,18 +5,18 @@ const isProd = process.env.NODE_ENV === "production";
 const ContentSecurityPolicy = [
   "default-src 'self'",
   // Next.js 및 외부 SDK 동작을 위한 인라인/eval 허용 (Kakao, Toss SDK 포함)
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://t1.kakaocdn.net https://*.tosspayments.com https://*.toss.im https://developers.kakao.com https://sharer.kakao.com https://www.instagram.com https://*.cdninstagram.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://t1.kakaocdn.net https://*.tosspayments.com https://toss.im https://*.toss.im https://developers.kakao.com https://sharer.kakao.com https://www.instagram.com https://*.cdninstagram.com",
   // Tailwind/Next inline styles + Pretendard CDN + Google Fonts (next/font)
   "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
   "font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
   // Supabase(PostgREST/Storage/Realtime) + Toss API + Kakao + 내부 API
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.tosspayments.com https://*.toss.im https://developers.kakao.com https://sharer.kakao.com https://www.instagram.com https://*.cdninstagram.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.tosspayments.com https://toss.im https://*.toss.im https://developers.kakao.com https://sharer.kakao.com https://www.instagram.com https://*.cdninstagram.com",
   // Toss 결제위젯 iframe, Google Maps 임베드, Kakao 공유 팝업, Instagram 임베드
-  "frame-src 'self' https://*.tosspayments.com https://*.toss.im https://www.google.com https://sharer.kakao.com https://www.instagram.com",
+  "frame-src 'self' https://*.tosspayments.com https://toss.im https://*.toss.im https://www.google.com https://sharer.kakao.com https://www.instagram.com",
   "object-src 'none'",
   "base-uri 'self'",
-  "form-action 'self' https://*.tosspayments.com https://*.toss.im",
+  "form-action 'self' https://*.tosspayments.com https://toss.im https://*.toss.im",
   "frame-ancestors 'none'",
   "upgrade-insecure-requests",
 ].join("; ");
