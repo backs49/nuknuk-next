@@ -26,6 +26,7 @@ import ReviewSection from "./ReviewSection";
 import type { Review, ReviewSummary } from "@/lib/review-db";
 import { COUPON_POINT_ENABLED } from "@/lib/feature-flags";
 import ShareButtons from "./ShareButtons";
+import { getSiteUrl } from "@/lib/site-url";
 
 interface MenuDetailClientProps {
   menuItem: DbMenuItem;
@@ -252,7 +253,7 @@ export default function MenuDetailClient({
                       ""
                     }
                     price={item.hidePrice ? null : item.price}
-                    productUrl={`https://nuknuk.vercel.app/menu/${dbMenuItem.id}`}
+                    productUrl={`${getSiteUrl()}/menu/${dbMenuItem.id}`}
                   />
 
                   {benefitsData && (

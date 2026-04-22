@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getMenuItem, getCategories } from "@/lib/menu-db";
+import { getSiteUrl } from "@/lib/site-url";
 import { getMenuDetail } from "@/lib/menu-option-db";
 import { notFound } from "next/navigation";
 import MenuDetailClient from "@/components/menu/MenuDetailClient";
@@ -37,7 +38,7 @@ export async function generateMetadata({
         height: 630,
         alt: menuItem.name,
       }],
-      url: `https://nuknuk.vercel.app/menu/${params.id}`,
+      url: `${getSiteUrl()}/menu/${params.id}`,
     },
   };
 }

@@ -5,6 +5,7 @@ import Script from "next/script";
 import "./globals.css";
 import CartProvider from "@/components/CartProvider";
 import CartSlidePanel from "@/components/CartSlidePanel";
+import { getSiteUrl } from "@/lib/site-url";
 
 // Playfair Display — 영문 디스플레이 폰트
 const playfair = Playfair_Display({
@@ -40,7 +41,7 @@ export const metadata: Metadata = {
     title: "넉넉 디저트 | Nuknuk Dessert",
     description:
       "재료도, 정성도, 마음도 넉넉(裕)하게 담았습니다. 경북 영천 수제 디저트 전문점.",
-    url: "https://nuknuk.vercel.app",
+    url: getSiteUrl(),
     siteName: "넉넉 디저트",
     locale: "ko_KR",
     type: "website",
