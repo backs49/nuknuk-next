@@ -142,8 +142,8 @@ export default function PickupDateTimePicker({
       cells.push({
         date,
         disabled: isPast || isClosed,
-        regularClosed: regular && !isPast,
-        adhocClosed: adhoc && !isPast,
+        regularClosed: regular,
+        adhocClosed: adhoc,
       });
     }
     while (cells.length % 7 !== 0) cells.push(null);
@@ -329,22 +329,40 @@ export default function PickupDateTimePicker({
             })}
           </div>
 
-          {upcomingAdhoc.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-warm-100 space-y-1">
-              <p className="text-xs font-semibold text-charcoal-300 mb-1">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-400 mr-1 align-middle" />
-                임시 휴무 안내
-              </p>
-              <ul className="space-y-0.5">
-                {upcomingAdhoc.map((c, i) => (
-                  <li key={i} className="text-[11px] text-charcoal-300 leading-snug">
-                    {c.startDate === c.endDate
-                      ? c.startDate
-                      : `${c.startDate} ~ ${c.endDate}`}
-                    {c.reason && <span className="text-charcoal-200"> · {c.reason}</span>}
-                  </li>
-                ))}
-              </ul>
+          {(closedWeekdaySet.size > 0 || upcomingAdhoc.length > 0) && (
+            <div className="mt-3 pt-3 border-t border-warm-100 space-y-2">
+              {closedWeekdaySet.size > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-charcoal-300 mb-1">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-charcoal-100/60 mr-1 align-middle" />
+                    정기 휴무
+                  </p>
+                  <p className="text-[11px] text-charcoal-300 leading-snug">
+                    매주 {Array.from(closedWeekdaySet)
+                      .sort((a, b) => a - b)
+                      .map((n) => WEEKDAYS[n] + "요일")
+                      .join(", ")}
+                  </p>
+                </div>
+              )}
+              {upcomingAdhoc.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-charcoal-300 mb-1">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-400 mr-1 align-middle" />
+                    임시 휴무 안내
+                  </p>
+                  <ul className="space-y-0.5">
+                    {upcomingAdhoc.map((c, i) => (
+                      <li key={i} className="text-[11px] text-charcoal-300 leading-snug">
+                        {c.startDate === c.endDate
+                          ? c.startDate
+                          : `${c.startDate} ~ ${c.endDate}`}
+                        {c.reason && <span className="text-charcoal-200"> · {c.reason}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 
