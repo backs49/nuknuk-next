@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
@@ -11,12 +11,16 @@ function SuccessContent() {
   const { clearCart } = useCart();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState("");
+  const confirmedRef = useRef(false);
 
   const paymentKey = searchParams.get("paymentKey");
   const orderId = searchParams.get("orderId");
   const amount = searchParams.get("amount");
 
   useEffect(() => {
+    if (confirmedRef.current) return;
+    confirmedRef.current = true;
+
     async function confirmPayment() {
       if (!paymentKey || !orderId || !amount) {
         setStatus("error");
@@ -40,7 +44,7 @@ function SuccessContent() {
             router.push("/");
           }, 3000);
         } else {
-          const data = await response.json();
+          const data = await response.json().catch(() => ({}));
           setStatus("error");
           setErrorMessage(data?.error || data?.message || "결제 승인 처리 중 오류가 발생했습니다.");
         }

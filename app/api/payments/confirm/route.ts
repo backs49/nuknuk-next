@@ -101,6 +101,15 @@ export async function POST(req: Request) {
           { status: 400 }
         );
       }
+
+      // 멱등성: 이미 결제된 주문이면 Toss 재호출 없이 성공 반환
+      // (중복 confirm 요청이 Toss "ALREADY_PROCESSED" 에러로 실패하는 것 방지)
+      if (order.paymentKey && order.paymentKey === paymentKey && order.status !== "pending") {
+        return NextResponse.json({
+          success: true,
+          data: { orderId: order.orderNumber, alreadyConfirmed: true },
+        });
+      }
     }
 
     // 0원 결제 처리 (포인트/쿠폰으로 전액 할인)
