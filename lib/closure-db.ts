@@ -1,6 +1,7 @@
 // lib/closure-db.ts
 // 운영시간(영업시간, 정기휴무) + 비정기 휴무 조회/수정
 import { getServiceSupabase } from './supabase'
+import { getSupabaseOrThrow } from './db-utils'
 import { getSetting, updateSetting } from './settings-db'
 
 export interface ShopClosure {
@@ -61,16 +62,22 @@ export async function setClosedWeekdays(weekdays: number[]): Promise<void> {
 
 // ---- 영업시간 ----
 
+function parseIntOr(raw: string, fallback: number): number {
+  const n = Number(raw)
+  return Number.isFinite(n) ? n : fallback
+}
+
 export async function getOperatingHours(): Promise<OperatingHours> {
   const [openRaw, closeRaw, slotRaw] = await Promise.all([
     getSetting('open_hour'),
     getSetting('close_hour'),
     getSetting('pickup_slot_minutes'),
   ])
-  const openHour = Number(openRaw) || 10
-  const closeHour = Number(closeRaw) || 16
-  const slotMinutes = Number(slotRaw) || 60
-  return { openHour, closeHour, slotMinutes }
+  return {
+    openHour: parseIntOr(openRaw, 10),
+    closeHour: parseIntOr(closeRaw, 16),
+    slotMinutes: parseIntOr(slotRaw, 60),
+  }
 }
 
 export async function setOperatingHours(h: OperatingHours): Promise<void> {
@@ -117,8 +124,11 @@ export async function listClosures(opts?: {
   }
 
   const { data, error } = await query
-  if (error || !data) return []
-  return (data as DbShopClosure[]).map(toClosure)
+  if (error) {
+    console.error('[listClosures]', error)
+    throw new Error(`휴무 목록 조회 실패: ${error.message}`)
+  }
+  return (data ?? []).map((r) => toClosure(r as DbShopClosure))
 }
 
 export async function createClosure(input: {
@@ -132,8 +142,7 @@ export async function createClosure(input: {
     throw new Error('시작일은 종료일보다 같거나 빨라야 합니다')
   }
 
-  const supabase = getServiceSupabase()
-  if (!supabase) throw new Error('Supabase가 설정되지 않았습니다')
+  const supabase = getSupabaseOrThrow()
 
   const { data, error } = await supabase
     .from('shop_closures')
@@ -150,9 +159,7 @@ export async function createClosure(input: {
 }
 
 export async function deleteClosure(id: string): Promise<void> {
-  const supabase = getServiceSupabase()
-  if (!supabase) throw new Error('Supabase가 설정되지 않았습니다')
-
+  const supabase = getSupabaseOrThrow()
   const { error } = await supabase.from('shop_closures').delete().eq('id', id)
   if (error) throw new Error(`휴무 삭제 실패: ${error.message}`)
 }
