@@ -30,6 +30,10 @@ const DEFAULTS: Record<string, string> = {
   banner_link: '',
   banner_bg_color: '#6B8E23',
   banner_text_color: '#FFFFFF',
+  closed_weekdays: '1',
+  open_hour: '10',
+  close_hour: '16',
+  pickup_slot_minutes: '60',
 }
 
 function toSetting(db: DbShopSetting): ShopSetting {
