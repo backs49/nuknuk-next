@@ -139,6 +139,9 @@ export default function OrderPage() {
           couponDiscount: formData.couponDiscount,
           pointUsed: formData.pointUsed,
           referralCode: formData.referralCode,
+          privacyConsent: formData.privacyConsent,
+          thirdPartyConsent: formData.thirdPartyConsent,
+          marketingConsent: formData.marketingConsent,
         }),
       });
 

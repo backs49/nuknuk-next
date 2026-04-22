@@ -53,6 +53,8 @@ export async function createOrder(input: CreateOrderInput): Promise<Order> {
       point_earned: input.pointEarned || 0,
       final_amount: finalAmount,
       access_token: generateAccessToken(),
+      consent_collected_at: new Date().toISOString(),
+      marketing_consent: input.marketingConsent ?? false,
     })
     .select()
     .single();

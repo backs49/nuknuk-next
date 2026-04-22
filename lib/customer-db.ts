@@ -7,19 +7,24 @@ import {
 } from '@/data/customer'
 
 // 전화번호로 고객 조회/생성 (upsert)
+// marketingConsent가 전달되면 동의 시각(last_consent_at)도 함께 갱신
 export async function upsertCustomer(
   phone: string,
-  name: string
+  name: string,
+  marketingConsent?: boolean
 ): Promise<Customer> {
   const supabase = getSupabaseOrThrow()
   const normalized = normalizePhone(phone)
 
+  const payload: Record<string, unknown> = { phone: normalized, name }
+  if (typeof marketingConsent === 'boolean') {
+    payload.marketing_consent = marketingConsent
+    payload.last_consent_at = new Date().toISOString()
+  }
+
   const { data, error } = await supabase
     .from('customers')
-    .upsert(
-      { phone: normalized, name },
-      { onConflict: 'phone' }
-    )
+    .upsert(payload, { onConflict: 'phone' })
     .select()
     .single()
 

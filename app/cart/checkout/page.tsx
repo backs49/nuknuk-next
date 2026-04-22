@@ -78,6 +78,13 @@ export default function CartCheckoutPage() {
   const [customerMemo, setCustomerMemo] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  // 개인정보 동의 상태
+  const [privacyConsent, setPrivacyConsent] = useState(false);
+  const [thirdPartyConsent, setThirdPartyConsent] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
+  const [consentPrefilled, setConsentPrefilled] = useState(false);
+  const [returningCustomer, setReturningCustomer] = useState(false);
   const [discount, setDiscount] = useState<DiscountData>({
     couponDiscount: 0,
     pointUsed: 0,
@@ -194,6 +201,10 @@ export default function CartCheckoutPage() {
       setError("배송 주소를 입력해주세요.");
       return;
     }
+    if (!privacyConsent || !thirdPartyConsent) {
+      setError("개인정보 수집·이용 및 제3자 제공에 동의해주세요.");
+      return;
+    }
 
     setIsSubmitting(true);
     setError("");
@@ -222,6 +233,9 @@ export default function CartCheckoutPage() {
           couponDiscount: discount.couponDiscount,
           pointUsed: discount.pointUsed,
           referralCode: discount.referralCode,
+          privacyConsent,
+          thirdPartyConsent,
+          marketingConsent,
         }),
       });
 
@@ -356,7 +370,29 @@ export default function CartCheckoutPage() {
             <input
               type="tel"
               value={customerPhone}
-              onChange={(e) => setCustomerPhone(formatKoreanPhone(e.target.value))}
+              onChange={(e) => {
+                setCustomerPhone(formatKoreanPhone(e.target.value));
+                setConsentPrefilled(false);
+              }}
+              onBlur={async () => {
+                const normalized = customerPhone.replace(/\D/g, "");
+                if (normalized.length < 10 || consentPrefilled) return;
+                try {
+                  const res = await fetch(
+                    `/api/customers/lookup?phone=${encodeURIComponent(normalized)}`
+                  );
+                  if (!res.ok) return;
+                  const data = await res.json();
+                  const prior = data?.customer?.marketingConsent;
+                  if (prior !== undefined && prior !== null) {
+                    setPrivacyConsent(true);
+                    setThirdPartyConsent(true);
+                    setMarketingConsent(Boolean(prior));
+                    setReturningCustomer(true);
+                  }
+                  setConsentPrefilled(true);
+                } catch {}
+              }}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage-400/50"
               placeholder="010-1234-5678"
               inputMode="numeric"
@@ -536,6 +572,65 @@ export default function CartCheckoutPage() {
           <div className="flex justify-between pt-3 border-t border-gray-200">
             <span className="font-bold text-lg text-charcoal-400">최종 결제금액</span>
             <span className="font-bold text-lg text-sage-400">{formatPrice(finalAmount)}</span>
+          </div>
+        </div>
+
+        {/* 개인정보 동의 */}
+        <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm">
+          <h2 className="font-bold text-charcoal-400 mb-3">개인정보 처리 동의</h2>
+          {returningCustomer && (
+            <div className="mb-3 px-3 py-2 bg-sage-400/10 border border-sage-400/20 rounded-lg">
+              <p className="text-xs text-sage-500">
+                반갑습니다! 이전 동의 내역을 기반으로 체크해 두었습니다.
+              </p>
+            </div>
+          )}
+          <div className="space-y-2.5">
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={privacyConsent}
+                onChange={(e) => setPrivacyConsent(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-sage-400"
+              />
+              <span className="text-sm text-charcoal-300">
+                <span className="text-red-400">[필수]</span> 개인정보 수집·이용 동의
+                <span className="block text-xs text-charcoal-100 mt-0.5">
+                  주문 처리·배송·고객 상담을 위해 이름, 연락처, 주소를 수집합니다. 주문 완료 후 5년간 보관됩니다.
+                </span>
+                <Link href="/privacy" target="_blank" className="text-xs text-sage-400 hover:underline mt-0.5 inline-block">
+                  전문 보기 →
+                </Link>
+              </span>
+            </label>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={thirdPartyConsent}
+                onChange={(e) => setThirdPartyConsent(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-sage-400"
+              />
+              <span className="text-sm text-charcoal-300">
+                <span className="text-red-400">[필수]</span> 개인정보 제3자 제공 동의
+                <span className="block text-xs text-charcoal-100 mt-0.5">
+                  결제(토스페이먼츠), 배송(택배사), 알림(카카오 알림톡) 처리를 위해 관련 정보를 위탁합니다.
+                </span>
+              </span>
+            </label>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={marketingConsent}
+                onChange={(e) => setMarketingConsent(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-sage-400"
+              />
+              <span className="text-sm text-charcoal-300">
+                <span className="text-charcoal-200">[선택]</span> 마케팅 정보 수신 동의
+                <span className="block text-xs text-charcoal-100 mt-0.5">
+                  신메뉴·이벤트·쿠폰 등의 소식을 문자로 받아보실 수 있습니다. (선택 사항)
+                </span>
+              </span>
+            </label>
           </div>
         </div>
 

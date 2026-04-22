@@ -43,6 +43,8 @@ export interface Order {
   paymentMethod: string | null;
   paidAt: string | null;
   accessToken: string;
+  consentCollectedAt: string | null;
+  marketingConsent: boolean;
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];
@@ -75,6 +77,8 @@ export interface DbOrder {
   payment_method: string | null;
   paid_at: string | null;
   access_token: string;
+  consent_collected_at: string | null;
+  marketing_consent: boolean | null;
   created_at: string;
   updated_at: string;
 }
@@ -110,6 +114,7 @@ export interface CreateOrderInput {
   pointUsed?: number;
   pointEarned?: number;
   finalAmount?: number;
+  marketingConsent?: boolean;
   items: {
     menuItemId?: string;
     name: string;
@@ -166,6 +171,8 @@ export function toOrder(dbOrder: DbOrder, dbItems: DbOrderItem[]): Order {
     paymentMethod: dbOrder.payment_method,
     paidAt: dbOrder.paid_at,
     accessToken: dbOrder.access_token,
+    consentCollectedAt: dbOrder.consent_collected_at,
+    marketingConsent: dbOrder.marketing_consent ?? false,
     createdAt: dbOrder.created_at,
     updatedAt: dbOrder.updated_at,
     items: dbItems.map((item) => ({

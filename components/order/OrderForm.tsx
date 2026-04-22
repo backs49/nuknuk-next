@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { MenuItem, CategoryInfo, formatPrice } from "@/data/menu";
 import CouponPointSection, { type DiscountData } from "./CouponPointSection";
 import { COUPON_POINT_ENABLED } from "@/lib/feature-flags";
@@ -24,6 +25,10 @@ export interface OrderFormData {
   couponCode?: string;
   referralCode?: string;
   finalAmount: number;
+  // 개인정보 동의
+  privacyConsent: boolean;
+  thirdPartyConsent: boolean;
+  marketingConsent: boolean;
 }
 
 interface OrderFormProps {
@@ -94,6 +99,11 @@ export default function OrderForm({ menuItem, category, selectedOptions, onSubmi
     couponDiscount: 0,
     pointUsed: 0,
   });
+  const [privacyConsent, setPrivacyConsent] = useState(false);
+  const [thirdPartyConsent, setThirdPartyConsent] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(false);
+  const [consentPrefilled, setConsentPrefilled] = useState(false);
+  const [returningCustomer, setReturningCustomer] = useState(false);
   const [operating, setOperating] = useState<{
     openHour: number;
     closeHour: number;
@@ -153,6 +163,10 @@ export default function OrderForm({ menuItem, category, selectedOptions, onSubmi
       setError("배송지 주소를 입력해 주세요.");
       return;
     }
+    if (!privacyConsent || !thirdPartyConsent) {
+      setError("개인정보 수집·이용 및 제3자 제공에 동의해주세요.");
+      return;
+    }
 
     setSubmitting(true);
     onSubmit({
@@ -163,6 +177,9 @@ export default function OrderForm({ menuItem, category, selectedOptions, onSubmi
       couponCode: discount.couponCode,
       referralCode: discount.referralCode,
       finalAmount,
+      privacyConsent,
+      thirdPartyConsent,
+      marketingConsent,
     });
   }
 
@@ -242,7 +259,29 @@ export default function OrderForm({ menuItem, category, selectedOptions, onSubmi
           <input
             type="tel"
             value={form.customerPhone}
-            onChange={(e) => update("customerPhone", formatKoreanPhone(e.target.value))}
+            onChange={(e) => {
+              update("customerPhone", formatKoreanPhone(e.target.value));
+              setConsentPrefilled(false);
+            }}
+            onBlur={async () => {
+              const normalized = form.customerPhone.replace(/\D/g, "");
+              if (normalized.length < 10 || consentPrefilled) return;
+              try {
+                const res = await fetch(
+                  `/api/customers/lookup?phone=${encodeURIComponent(normalized)}`
+                );
+                if (!res.ok) return;
+                const data = await res.json();
+                const prior = data?.customer?.marketingConsent;
+                if (prior !== undefined && prior !== null) {
+                  setPrivacyConsent(true);
+                  setThirdPartyConsent(true);
+                  setMarketingConsent(Boolean(prior));
+                  setReturningCustomer(true);
+                }
+                setConsentPrefilled(true);
+              } catch {}
+            }}
             className="input"
             placeholder="010-0000-0000"
             inputMode="numeric"
@@ -408,6 +447,64 @@ export default function OrderForm({ menuItem, category, selectedOptions, onSubmi
           </div>
         </div>
       </div>
+
+      {/* 개인정보 동의 */}
+      <Section title="개인정보 처리 동의">
+        {returningCustomer && (
+          <div className="px-3 py-2 bg-sage-400/10 border border-sage-400/20 rounded-lg">
+            <p className="text-xs text-sage-500">
+              반갑습니다! 이전 동의 내역을 기반으로 체크해 두었습니다.
+            </p>
+          </div>
+        )}
+        <div className="space-y-2.5">
+          <label className="flex items-start gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={privacyConsent}
+              onChange={(e) => setPrivacyConsent(e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-sage-400"
+            />
+            <span className="text-sm text-charcoal-300">
+              <span className="text-red-400">[필수]</span> 개인정보 수집·이용 동의
+              <span className="block text-xs text-charcoal-100 mt-0.5">
+                주문 처리·배송·고객 상담을 위해 이름, 연락처, 주소를 수집합니다. 주문 완료 후 5년간 보관됩니다.
+              </span>
+              <Link href="/privacy" target="_blank" className="text-xs text-sage-400 hover:underline mt-0.5 inline-block">
+                전문 보기 →
+              </Link>
+            </span>
+          </label>
+          <label className="flex items-start gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={thirdPartyConsent}
+              onChange={(e) => setThirdPartyConsent(e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-sage-400"
+            />
+            <span className="text-sm text-charcoal-300">
+              <span className="text-red-400">[필수]</span> 개인정보 제3자 제공 동의
+              <span className="block text-xs text-charcoal-100 mt-0.5">
+                결제(토스페이먼츠), 배송(택배사), 알림(카카오 알림톡) 처리를 위해 관련 정보를 위탁합니다.
+              </span>
+            </span>
+          </label>
+          <label className="flex items-start gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={marketingConsent}
+              onChange={(e) => setMarketingConsent(e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-sage-400"
+            />
+            <span className="text-sm text-charcoal-300">
+              <span className="text-charcoal-200">[선택]</span> 마케팅 정보 수신 동의
+              <span className="block text-xs text-charcoal-100 mt-0.5">
+                신메뉴·이벤트·쿠폰 등의 소식을 문자로 받아보실 수 있습니다. (선택 사항)
+              </span>
+            </span>
+          </label>
+        </div>
+      </Section>
 
       {error && (
         <div className="p-4 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100">

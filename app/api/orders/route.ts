@@ -49,12 +49,23 @@ export async function POST(request: NextRequest) {
       pickupDate,
       customerMemo,
       shippingFee,
+      privacyConsent,
+      thirdPartyConsent,
+      marketingConsent,
     } = body;
 
     // 필수값 검증
     if (!customerName || !customerPhone || !deliveryMethod) {
       return NextResponse.json(
         { error: "필수 항목을 입력해주세요" },
+        { status: 400 }
+      );
+    }
+
+    // 개인정보 수집/제3자 제공 동의 검증 (필수)
+    if (privacyConsent !== true || thirdPartyConsent !== true) {
+      return NextResponse.json(
+        { error: "개인정보 수집·이용 및 제3자 제공에 동의해주세요" },
         { status: 400 }
       );
     }
@@ -182,9 +193,9 @@ export async function POST(request: NextRequest) {
     let pointUsed = 0;
 
     if (COUPON_POINT_ENABLED) {
-      // 고객 식별 (전화번호 기반 upsert)
+      // 고객 식별 (전화번호 기반 upsert) + 마케팅 동의 이력 갱신
       try {
-        const customer = await upsertCustomer(customerPhone, customerName);
+        const customer = await upsertCustomer(customerPhone, customerName, Boolean(marketingConsent));
         customerId = customer.id;
 
         // 추천 코드 처리
@@ -244,6 +255,7 @@ export async function POST(request: NextRequest) {
       pointUsed,
       pointEarned,
       finalAmount,
+      marketingConsent: Boolean(marketingConsent),
       items: resolvedItems,
     });
 

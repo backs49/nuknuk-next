@@ -11,6 +11,8 @@ export interface Customer {
   totalSpent: number
   referralCode: string | null
   referredBy: string | null
+  marketingConsent: boolean
+  lastConsentAt: string | null
   createdAt: string
 }
 
@@ -23,6 +25,8 @@ export interface DbCustomer {
   total_spent: number
   referral_code: string | null
   referred_by: string | null
+  marketing_consent: boolean | null
+  last_consent_at: string | null
   created_at: string
 }
 
@@ -36,6 +40,8 @@ export function toCustomer(db: DbCustomer): Customer {
     totalSpent: db.total_spent,
     referralCode: db.referral_code,
     referredBy: db.referred_by,
+    marketingConsent: db.marketing_consent ?? false,
+    lastConsentAt: db.last_consent_at,
     createdAt: db.created_at,
   }
 }

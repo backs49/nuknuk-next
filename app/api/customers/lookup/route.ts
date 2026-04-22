@@ -39,6 +39,10 @@ export async function GET(request: NextRequest) {
         pointBalance: customer.pointBalance,
         referralCode: customer.referralCode,
         canUseReferralCode,
+        // 이전 동의 이력 (체크아웃 체크박스 자동 체크용)
+        // null이면 동의 이력 없음, true/false면 마케팅 수신 선호 저장됨
+        marketingConsent: customer.lastConsentAt ? customer.marketingConsent : null,
+        lastConsentAt: customer.lastConsentAt,
       },
       coupons,
       pointBalance: customer.pointBalance,
