@@ -9,6 +9,8 @@ interface Props {
   startHour?: number;
   endHour?: number;
   stepMinutes?: number;
+  closedWeekdays?: number[];
+  closedDates?: string[];
 }
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -59,8 +61,10 @@ export default function PickupDateTimePicker({
   onChange,
   minLeadDays = 2,
   startHour = 10,
-  endHour = 18,
+  endHour = 16,
   stepMinutes = 60,
+  closedWeekdays,
+  closedDates,
 }: Props) {
   const parsed = useMemo(() => parseIsoLocal(value), [value]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(parsed.date);
@@ -86,19 +90,32 @@ export default function PickupDateTimePicker({
 
   const minDate = useMemo(() => startOfDay(addDays(new Date(), minLeadDays)), [minLeadDays]);
 
+  const closedWeekdaySet = useMemo(
+    () => new Set(closedWeekdays ?? []),
+    [closedWeekdays]
+  );
+  const closedDateSet = useMemo(
+    () => new Set(closedDates ?? []),
+    [closedDates]
+  );
+
   const calendarCells = useMemo(() => {
     const first = new Date(viewYear, viewMonth, 1);
     const firstWeekday = first.getDay();
     const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-    const cells: Array<{ date: Date; disabled: boolean } | null> = [];
+    const cells: Array<{ date: Date; disabled: boolean; closed: boolean } | null> = [];
     for (let i = 0; i < firstWeekday; i++) cells.push(null);
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(viewYear, viewMonth, d);
-      cells.push({ date, disabled: date < minDate });
+      const iso = `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+      const isPast = date < minDate;
+      const isClosed =
+        closedWeekdaySet.has(date.getDay()) || closedDateSet.has(iso);
+      cells.push({ date, disabled: isPast || isClosed, closed: isClosed && !isPast });
     }
     while (cells.length % 7 !== 0) cells.push(null);
     return cells;
-  }, [viewYear, viewMonth, minDate]);
+  }, [viewYear, viewMonth, minDate, closedWeekdaySet, closedDateSet]);
 
   const timeSlots = useMemo(() => {
     const slots: Array<{ hour: number; minute: number }> = [];
@@ -235,7 +252,8 @@ export default function PickupDateTimePicker({
                   type="button"
                   disabled={cell.disabled}
                   onClick={() => pickDate(cell.date)}
-                  className={`aspect-square text-sm rounded-lg transition ${
+                  title={cell.closed ? "휴무" : undefined}
+                  className={`relative aspect-square text-sm rounded-lg transition ${
                     isSelected
                       ? "bg-sage-400 text-white font-semibold shadow-sm shadow-sage-200/50"
                       : cell.disabled
@@ -248,6 +266,9 @@ export default function PickupDateTimePicker({
                   }`}
                 >
                   {cell.date.getDate()}
+                  {cell.closed && (
+                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-red-400" />
+                  )}
                 </button>
               );
             })}
