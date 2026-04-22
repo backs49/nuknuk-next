@@ -68,16 +68,38 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-white/10 pt-6 text-center text-xs text-white/30 space-y-2">
-          <div className="space-x-4">
+        <div className="border-t border-white/10 pt-6 text-xs text-white/30 space-y-3">
+          <div className="space-y-1 leading-relaxed">
+            <p>
+              <span className="text-white/50">상호</span> 넉넉할유
+              <span className="mx-2 text-white/20">|</span>
+              <span className="text-white/50">대표자</span> 도유리
+            </p>
+            <p>
+              <span className="text-white/50">사업자등록번호</span> 114-28-64011
+            </p>
+            <p>
+              <span className="text-white/50">사업장 소재지</span> 경상북도 영천시 서문길 90, A동(성내동)
+            </p>
+            <p>
+              <span className="text-white/50">전화</span>{" "}
+              <a
+                href="tel:0507-1328-3934"
+                className="hover:text-white transition-colors"
+              >
+                0507-1328-3934
+              </a>
+            </p>
+          </div>
+          <div className="pt-3 border-t border-white/5 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <Link
               href="/privacy"
               className="hover:text-white transition-colors"
             >
               개인정보 처리방침
             </Link>
+            <p>© {new Date().getFullYear()} 넉넉할유 (넉넉 디저트). All rights reserved.</p>
           </div>
-          <p>© {new Date().getFullYear()} 넉넉 디저트 (Nuknuk Dessert). All rights reserved.</p>
         </div>
       </div>
     </footer>
