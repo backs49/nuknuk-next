@@ -48,9 +48,12 @@ export default function OperatingClient() {
     setLoading(true);
     try {
       const [opRes, clRes] = await Promise.all([
-        fetch("/api/shop/operating"),
-        fetch("/api/admin/operating/closures"),
+        fetch("/api/shop/operating", { cache: "no-store" }),
+        fetch("/api/admin/operating/closures", { cache: "no-store" }),
       ]);
+      if (!opRes.ok || !clRes.ok) {
+        throw new Error("운영 정보를 불러오지 못했습니다");
+      }
       const op: OperatingState = await opRes.json();
       const cl = await clRes.json();
       setOpenHour(op.openHour);
@@ -58,6 +61,8 @@ export default function OperatingClient() {
       setSlotMinutes(op.slotMinutes);
       setWeekdays(new Set(op.closedWeekdays));
       setClosures(cl.closures ?? []);
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "로드 실패");
     } finally {
       setLoading(false);
     }
@@ -309,6 +314,7 @@ export default function OperatingClient() {
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="예: 어린이날 연휴"
+            maxLength={200}
             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
           />
         </label>

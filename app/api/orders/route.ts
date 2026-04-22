@@ -13,6 +13,12 @@ import { calculateOptionPrice, type SelectedOption } from "@/lib/option-utils";
 import { orderCreateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 import { validateOrderInputLengths } from "@/lib/input-limits";
 import { apiError } from "@/lib/api-error";
+import {
+  getClosedWeekdays,
+  getOperatingHours,
+  listClosures,
+  expandClosedDates,
+} from "@/lib/closure-db";
 
 interface OrderItemInput {
   menuItemId: string;
@@ -71,6 +77,46 @@ export async function POST(request: NextRequest) {
       if (!item.menuItemId || item.quantity < 1 || item.quantity > 99) {
         return NextResponse.json(
           { error: "수량은 1~99 사이만 가능합니다" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 픽업 날짜·시간 검증 (휴무·영업시간 서버 검증)
+    if (deliveryMethod === "pickup" && typeof pickupDate === "string" && pickupDate) {
+      const match = pickupDate.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+      if (!match) {
+        return NextResponse.json(
+          { error: "픽업 날짜 형식이 올바르지 않습니다" },
+          { status: 400 }
+        );
+      }
+      const [, y, mo, d, h] = match;
+      const dateIso = `${y}-${mo}-${d}`;
+      const hour = Number(h);
+      const weekday = new Date(Number(y), Number(mo) - 1, Number(d)).getDay();
+
+      const [hours, closedWeekdays, closures] = await Promise.all([
+        getOperatingHours(),
+        getClosedWeekdays(),
+        listClosures({ from: dateIso, to: dateIso }),
+      ]);
+
+      if (closedWeekdays.includes(weekday)) {
+        return NextResponse.json(
+          { error: "선택하신 요일은 정기 휴무입니다. 다른 날짜를 선택해주세요." },
+          { status: 400 }
+        );
+      }
+      if (expandClosedDates(closures).includes(dateIso)) {
+        return NextResponse.json(
+          { error: "선택하신 날짜는 임시 휴무입니다. 다른 날짜를 선택해주세요." },
+          { status: 400 }
+        );
+      }
+      if (hour < hours.openHour || hour > hours.closeHour) {
+        return NextResponse.json(
+          { error: "영업시간 내 픽업 시간을 선택해주세요." },
           { status: 400 }
         );
       }

@@ -34,6 +34,9 @@ export async function POST(req: NextRequest) {
     if (!startDate) {
       return NextResponse.json({ error: 'startDate 필수' }, { status: 400 })
     }
+    if (reason && reason.length > 200) {
+      return NextResponse.json({ error: '사유는 최대 200자입니다' }, { status: 400 })
+    }
 
     const created = await createClosure({ startDate, endDate, reason })
     return NextResponse.json({ closure: created }, { status: 201 })
