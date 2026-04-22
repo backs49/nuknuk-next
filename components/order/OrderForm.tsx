@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MenuItem, CategoryInfo, formatPrice } from "@/data/menu";
 import CouponPointSection, { type DiscountData } from "./CouponPointSection";
 import { COUPON_POINT_ENABLED } from "@/lib/feature-flags";
@@ -94,8 +94,30 @@ export default function OrderForm({ menuItem, category, selectedOptions, onSubmi
     couponDiscount: 0,
     pointUsed: 0,
   });
+  const [operating, setOperating] = useState<{
+    openHour: number;
+    closeHour: number;
+    slotMinutes: number;
+    closedWeekdays: number[];
+    closedDates: string[];
+  }>({
+    openHour: 10,
+    closeHour: 16,
+    slotMinutes: 60,
+    closedWeekdays: [],
+    closedDates: [],
+  });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/shop/operating")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) setOperating(d);
+      })
+      .catch(() => {});
+  }, []);
 
   function update<K extends keyof OrderFormData>(key: K, value: OrderFormData[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -305,6 +327,11 @@ export default function OrderForm({ menuItem, category, selectedOptions, onSubmi
             <PickupDateTimePicker
               value={form.pickupDate}
               onChange={(v) => update("pickupDate", v)}
+              startHour={operating.openHour}
+              endHour={operating.closeHour}
+              stepMinutes={operating.slotMinutes}
+              closedWeekdays={operating.closedWeekdays}
+              closedDates={operating.closedDates}
             />
           </Field>
         )}
