@@ -88,19 +88,21 @@ export default function CartCheckoutPage() {
     slotMinutes: number;
     closedWeekdays: number[];
     closedDates: string[];
+    closures: { startDate: string; endDate: string; reason: string | null }[];
   }>({
     openHour: 10,
     closeHour: 16,
     slotMinutes: 60,
     closedWeekdays: [],
     closedDates: [],
+    closures: [],
   });
 
   useEffect(() => {
-    fetch("/api/shop/operating")
+    fetch("/api/shop/operating", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (d) setOperating(d);
+        if (d) setOperating({ closures: [], ...d });
       })
       .catch(() => {});
   }, []);
@@ -453,6 +455,7 @@ export default function CartCheckoutPage() {
                 stepMinutes={operating.slotMinutes}
                 closedWeekdays={operating.closedWeekdays}
                 closedDates={operating.closedDates}
+                closures={operating.closures}
               />
               <p className="text-xs text-charcoal-100 mt-1">
                 최소 2일 전 주문 부탁드립니다. 픽업 가능: {pad2Hour(operating.openHour)}:00~{pad2Hour(operating.closeHour)}:00.

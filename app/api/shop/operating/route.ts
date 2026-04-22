@@ -43,6 +43,11 @@ export async function GET(req: NextRequest) {
       slotMinutes: hours.slotMinutes,
       closedWeekdays,
       closedDates: expandClosedDates(closures),
+      closures: closures.map((c) => ({
+        startDate: c.startDate,
+        endDate: c.endDate,
+        reason: c.reason,
+      })),
     })
   } catch (err) {
     console.error('[GET /api/shop/operating]', err)
@@ -53,6 +58,7 @@ export async function GET(req: NextRequest) {
         slotMinutes: 60,
         closedWeekdays: [],
         closedDates: [],
+        closures: [],
       },
       { status: 200 }
     )

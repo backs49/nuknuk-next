@@ -2,6 +2,12 @@
 
 import { useMemo, useState, useEffect, useRef } from "react";
 
+interface ClosureEntry {
+  startDate: string;
+  endDate: string;
+  reason: string | null;
+}
+
 interface Props {
   value: string;
   onChange: (v: string) => void;
@@ -11,6 +17,7 @@ interface Props {
   stepMinutes?: number;
   closedWeekdays?: number[];
   closedDates?: string[];
+  closures?: ClosureEntry[];
 }
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
@@ -65,6 +72,7 @@ export default function PickupDateTimePicker({
   stepMinutes = 60,
   closedWeekdays,
   closedDates,
+  closures,
 }: Props) {
   const parsed = useMemo(() => parseIsoLocal(value), [value]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(parsed.date);
@@ -94,28 +102,61 @@ export default function PickupDateTimePicker({
     () => new Set(closedWeekdays ?? []),
     [closedWeekdays]
   );
-  const closedDateSet = useMemo(
-    () => new Set(closedDates ?? []),
-    [closedDates]
-  );
+  const adhocReasonByDate = useMemo(() => {
+    const map = new Map<string, string | null>();
+    const list = closures ?? [];
+    for (const c of list) {
+      const start = new Date(`${c.startDate}T00:00:00`);
+      const end = new Date(`${c.endDate}T00:00:00`);
+      const cur = new Date(start);
+      while (cur <= end) {
+        const iso = `${cur.getFullYear()}-${pad2(cur.getMonth() + 1)}-${pad2(cur.getDate())}`;
+        map.set(iso, c.reason);
+        cur.setDate(cur.getDate() + 1);
+      }
+    }
+    if (map.size === 0) {
+      for (const iso of closedDates ?? []) map.set(iso, null);
+    }
+    return map;
+  }, [closures, closedDates]);
 
   const calendarCells = useMemo(() => {
     const first = new Date(viewYear, viewMonth, 1);
     const firstWeekday = first.getDay();
     const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-    const cells: Array<{ date: Date; disabled: boolean; closed: boolean } | null> = [];
+    const cells: Array<{
+      date: Date;
+      disabled: boolean;
+      regularClosed: boolean;
+      adhocClosed: boolean;
+    } | null> = [];
     for (let i = 0; i < firstWeekday; i++) cells.push(null);
     for (let d = 1; d <= daysInMonth; d++) {
       const date = new Date(viewYear, viewMonth, d);
       const iso = `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
       const isPast = date < minDate;
-      const isClosed =
-        closedWeekdaySet.has(date.getDay()) || closedDateSet.has(iso);
-      cells.push({ date, disabled: isPast || isClosed, closed: isClosed && !isPast });
+      const adhoc = adhocReasonByDate.has(iso);
+      const regular = closedWeekdaySet.has(date.getDay());
+      const isClosed = adhoc || regular;
+      cells.push({
+        date,
+        disabled: isPast || isClosed,
+        regularClosed: regular && !isPast,
+        adhocClosed: adhoc && !isPast,
+      });
     }
     while (cells.length % 7 !== 0) cells.push(null);
     return cells;
-  }, [viewYear, viewMonth, minDate, closedWeekdaySet, closedDateSet]);
+  }, [viewYear, viewMonth, minDate, closedWeekdaySet, adhocReasonByDate]);
+
+  const upcomingAdhoc = useMemo(() => {
+    const list = closures ?? [];
+    const today = startOfDay(new Date());
+    return list
+      .filter((c) => new Date(`${c.endDate}T00:00:00`) >= today)
+      .sort((a, b) => a.startDate.localeCompare(b.startDate));
+  }, [closures]);
 
   const timeSlots = useMemo(() => {
     const slots: Array<{ hour: number; minute: number }> = [];
@@ -252,7 +293,19 @@ export default function PickupDateTimePicker({
                   type="button"
                   disabled={cell.disabled}
                   onClick={() => pickDate(cell.date)}
-                  title={cell.closed ? "휴무" : undefined}
+                  title={
+                    cell.adhocClosed
+                      ? `임시 휴무${
+                          (() => {
+                            const iso = `${cell.date.getFullYear()}-${pad2(cell.date.getMonth() + 1)}-${pad2(cell.date.getDate())}`;
+                            const reason = adhocReasonByDate.get(iso);
+                            return reason ? `: ${reason}` : "";
+                          })()
+                        }`
+                      : cell.regularClosed
+                      ? "정기 휴무"
+                      : undefined
+                  }
                   className={`relative aspect-square text-sm rounded-lg transition ${
                     isSelected
                       ? "bg-sage-400 text-white font-semibold shadow-sm shadow-sage-200/50"
@@ -266,13 +319,34 @@ export default function PickupDateTimePicker({
                   }`}
                 >
                   {cell.date.getDate()}
-                  {cell.closed && (
+                  {cell.adhocClosed ? (
                     <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-red-400" />
-                  )}
+                  ) : cell.regularClosed ? (
+                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-charcoal-100/60" />
+                  ) : null}
                 </button>
               );
             })}
           </div>
+
+          {upcomingAdhoc.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-warm-100 space-y-1">
+              <p className="text-xs font-semibold text-charcoal-300 mb-1">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-400 mr-1 align-middle" />
+                임시 휴무 안내
+              </p>
+              <ul className="space-y-0.5">
+                {upcomingAdhoc.map((c, i) => (
+                  <li key={i} className="text-[11px] text-charcoal-300 leading-snug">
+                    {c.startDate === c.endDate
+                      ? c.startDate
+                      : `${c.startDate} ~ ${c.endDate}`}
+                    {c.reason && <span className="text-charcoal-200"> · {c.reason}</span>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="mt-4 pt-4 border-t border-warm-100">
             <p className="text-xs font-semibold text-charcoal-300 mb-2">픽업 시간</p>

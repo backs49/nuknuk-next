@@ -100,21 +100,23 @@ export default function OrderForm({ menuItem, category, selectedOptions, onSubmi
     slotMinutes: number;
     closedWeekdays: number[];
     closedDates: string[];
+    closures: { startDate: string; endDate: string; reason: string | null }[];
   }>({
     openHour: 10,
     closeHour: 16,
     slotMinutes: 60,
     closedWeekdays: [],
     closedDates: [],
+    closures: [],
   });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetch("/api/shop/operating")
+    fetch("/api/shop/operating", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (d) setOperating(d);
+        if (d) setOperating({ closures: [], ...d });
       })
       .catch(() => {});
   }, []);
@@ -332,6 +334,7 @@ export default function OrderForm({ menuItem, category, selectedOptions, onSubmi
               stepMinutes={operating.slotMinutes}
               closedWeekdays={operating.closedWeekdays}
               closedDates={operating.closedDates}
+              closures={operating.closures}
             />
           </Field>
         )}
