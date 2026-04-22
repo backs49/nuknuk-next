@@ -92,12 +92,20 @@ export default function Footer() {
             </p>
           </div>
           <div className="pt-3 border-t border-white/5 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-            <Link
-              href="/privacy"
-              className="hover:text-white transition-colors"
-            >
-              개인정보 처리방침
-            </Link>
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              <Link
+                href="/privacy"
+                className="hover:text-white transition-colors"
+              >
+                개인정보 처리방침
+              </Link>
+              <Link
+                href="/refund-policy"
+                className="hover:text-white transition-colors"
+              >
+                청약철회·환불 규정
+              </Link>
+            </div>
             <p>© {new Date().getFullYear()} 넉넉할유 (넉넉 디저트). All rights reserved.</p>
           </div>
         </div>

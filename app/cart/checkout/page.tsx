@@ -634,6 +634,21 @@ export default function CartCheckoutPage() {
           </div>
         </div>
 
+        {/* 환불 규정 고지 */}
+        <div className="bg-warm-200/30 border border-warm-200 rounded-xl px-4 py-3 mb-4 text-xs text-charcoal-300 leading-relaxed">
+          <p className="font-medium text-charcoal-400 mb-1">
+            청약철회·환불 안내 (수제 식품 특성)
+          </p>
+          <p>
+            주문 후 제조되는 수제 디저트 특성상 <span className="font-semibold">픽업·배송 3일 전까지</span> 전액 환불이
+            가능하며, 제조 착수(2일 전) 이후에는 재료비·제조비가 차감될 수 있습니다.
+            하자·오배송은 수령 후 3일 이내 통지 시 전액 보상됩니다.{" "}
+            <Link href="/refund-policy" target="_blank" className="text-sage-500 underline hover:text-sage-600">
+              자세한 규정 보기 →
+            </Link>
+          </p>
+        </div>
+
         {/* 에러 */}
         {error && (
           <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm mb-4">
