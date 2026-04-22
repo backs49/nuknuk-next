@@ -19,6 +19,20 @@ interface CreatedOrder {
 
 type Step = "form" | "payment";
 
+const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
+
+function pad2Hour(n: number): string {
+  return n.toString().padStart(2, "0");
+}
+
+function formatWeekdays(days: number[]): string {
+  return days
+    .slice()
+    .sort((a, b) => a - b)
+    .map((d) => WEEKDAY_LABELS[d])
+    .join("/");
+}
+
 export default function CartCheckoutPage() {
   const { items, totalPrice } = useCart();
 
@@ -68,6 +82,28 @@ export default function CartCheckoutPage() {
     couponDiscount: 0,
     pointUsed: 0,
   });
+  const [operating, setOperating] = useState<{
+    openHour: number;
+    closeHour: number;
+    slotMinutes: number;
+    closedWeekdays: number[];
+    closedDates: string[];
+  }>({
+    openHour: 10,
+    closeHour: 16,
+    slotMinutes: 60,
+    closedWeekdays: [],
+    closedDates: [],
+  });
+
+  useEffect(() => {
+    fetch("/api/shop/operating")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) setOperating(d);
+      })
+      .catch(() => {});
+  }, []);
 
   // 카테고리 정보 fetch
   useEffect(() => {
@@ -409,8 +445,21 @@ export default function CartCheckoutPage() {
               <label className="block text-sm font-medium text-charcoal-300 mb-1">
                 픽업 날짜 · 시간 <span className="text-red-400">*</span>
               </label>
-              <PickupDateTimePicker value={pickupDate} onChange={setPickupDate} />
-              <p className="text-xs text-charcoal-100 mt-1">최소 2일 전 주문 부탁드립니다.</p>
+              <PickupDateTimePicker
+                value={pickupDate}
+                onChange={setPickupDate}
+                startHour={operating.openHour}
+                endHour={operating.closeHour}
+                stepMinutes={operating.slotMinutes}
+                closedWeekdays={operating.closedWeekdays}
+                closedDates={operating.closedDates}
+              />
+              <p className="text-xs text-charcoal-100 mt-1">
+                최소 2일 전 주문 부탁드립니다. 픽업 가능: {pad2Hour(operating.openHour)}:00~{pad2Hour(operating.closeHour)}:00.
+                {operating.closedWeekdays.length > 0 && (
+                  <> 정기 휴무: {formatWeekdays(operating.closedWeekdays)}.</>
+                )}
+              </p>
             </div>
           )}
 
