@@ -295,6 +295,7 @@ export default function OperatingClient() {
               value={startDate}
               onChange={setStartDate}
               placeholder="시작일 선택"
+              minDate={todayIso()}
             />
           </div>
           <div className="text-sm">
@@ -303,7 +304,7 @@ export default function OperatingClient() {
               value={endDate}
               onChange={setEndDate}
               placeholder="종료일 선택"
-              minDate={startDate || undefined}
+              minDate={startDate || todayIso()}
             />
           </div>
         </div>
