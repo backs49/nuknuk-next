@@ -102,13 +102,20 @@ export async function POST(req: Request) {
         );
       }
 
-      // 멱등성: 이미 결제된 주문이면 Toss 재호출 없이 성공 반환
-      // (중복 confirm 요청이 Toss "ALREADY_PROCESSED" 에러로 실패하는 것 방지)
-      if (order.paymentKey && order.paymentKey === paymentKey && order.status !== "pending") {
-        return NextResponse.json({
-          success: true,
-          data: { orderId: order.orderNumber, alreadyConfirmed: true },
-        });
+      // 멱등성/이중결제 방지: 이미 결제 처리된 주문은 Toss 재호출 금지
+      // - 동일 paymentKey 재요청 → 성공 반환 (멱등)
+      // - 다른 paymentKey 재요청 → 409 (이중결제 차단)
+      if (order.status !== "pending") {
+        if (order.paymentKey && order.paymentKey === paymentKey) {
+          return NextResponse.json({
+            success: true,
+            data: { orderId: order.orderNumber, alreadyConfirmed: true },
+          });
+        }
+        return NextResponse.json(
+          { error: "이미 결제 처리된 주문입니다" },
+          { status: 409 }
+        );
       }
     }
 
