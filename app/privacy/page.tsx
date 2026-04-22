@@ -8,18 +8,17 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-// TODO: 사업자 정보 확정 후 아래 상수 값 교체
 const BUSINESS = {
   serviceName: "넉넉 디저트",
-  companyName: "[사업자명]",
-  ceoName: "[대표자명]",
-  bizRegNo: "[사업자등록번호]",
-  mailOrderNo: "[통신판매업 신고번호]",
-  address: "경북 영천시 서문길 90 A동",
+  companyName: "넉넉할유",
+  ceoName: "도유리",
+  bizRegNo: "114-28-64011",
+  mailOrderNo: "확인 중 (신고 후 업데이트 예정)",
+  address: "경상북도 영천시 서문길 90, A동(성내동)",
   phone: "0507-1328-3934",
-  privacyOfficerName: "[개인정보 보호책임자 성함]",
-  privacyOfficerEmail: "[문의 이메일]",
-  effectiveDate: "2026년 4월 20일",
+  privacyOfficerName: "도유리 (대표)",
+  privacyOfficerKakaoChannel: "http://pf.kakao.com/_paCxdn",
+  effectiveDate: "2026년 4월 22일",
 };
 
 export default function PrivacyPage() {
@@ -324,10 +323,21 @@ export default function PrivacyPage() {
                   <span className="font-medium">연락처:</span> {BUSINESS.phone}
                 </p>
                 <p>
-                  <span className="font-medium">이메일:</span>{" "}
-                  {BUSINESS.privacyOfficerEmail}
+                  <span className="font-medium">카카오톡 채널:</span>{" "}
+                  <a
+                    href={BUSINESS.privacyOfficerKakaoChannel}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sage-400 underline hover:text-sage-500"
+                  >
+                    넉넉 디저트 채널 바로가기
+                  </a>
                 </p>
               </div>
+              <p className="mt-2 text-sm">
+                개인정보 관련 문의·열람·정정·삭제 요청은 대표 전화 또는
+                위 카카오톡 채널을 통해 접수해주시면 지체 없이 조치하겠습니다.
+              </p>
               <p className="mt-3 text-sm">
                 개인정보 침해에 대한 신고·상담은 아래 기관에도 문의할 수
                 있습니다.
