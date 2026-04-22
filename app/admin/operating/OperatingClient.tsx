@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import DatePicker from "@/components/form/DatePicker";
 
 interface Closure {
   id: string;
@@ -288,24 +289,23 @@ export default function OperatingClient() {
       <section className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
         <h2 className="font-bold text-charcoal-400">임시 휴무 추가</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <label className="text-sm">
+          <div className="text-sm">
             <span className="block mb-1 text-charcoal-300">시작일 *</span>
-            <input
-              type="date"
+            <DatePicker
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+              onChange={setStartDate}
+              placeholder="시작일 선택"
             />
-          </label>
-          <label className="text-sm">
+          </div>
+          <div className="text-sm">
             <span className="block mb-1 text-charcoal-300">종료일 (비우면 당일)</span>
-            <input
-              type="date"
+            <DatePicker
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+              onChange={setEndDate}
+              placeholder="종료일 선택"
+              minDate={startDate || undefined}
             />
-          </label>
+          </div>
         </div>
         <label className="text-sm block">
           <span className="block mb-1 text-charcoal-300">사유 (선택)</span>
