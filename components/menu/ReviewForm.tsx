@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Review } from "@/lib/review-db";
 import { resizeImage } from "@/lib/image-resize";
+import { formatKoreanPhone } from "@/lib/format-phone";
 
 interface ReviewFormProps {
   menuItemId: string;
@@ -216,13 +217,9 @@ export default function ReviewForm({
               type="tel"
               placeholder="전화번호 (예: 010-1234-5678)"
               value={phone}
-              onChange={(e) => {
-                const digits = e.target.value.replace(/[^0-9]/g, "").slice(0, 11);
-                let formatted = digits.slice(0, 3);
-                if (digits.length > 3) formatted += "-" + digits.slice(3, 7);
-                if (digits.length > 7) formatted += "-" + digits.slice(7);
-                setPhone(formatted);
-              }}
+              onChange={(e) => setPhone(formatKoreanPhone(e.target.value))}
+              inputMode="numeric"
+              maxLength={13}
               className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage-400/50"
             />
           </div>

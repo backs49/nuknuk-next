@@ -7,6 +7,8 @@ import { formatPrice, type CategoryInfo } from "@/data/menu";
 import PaymentWidget from "@/components/order/PaymentWidget";
 import CouponPointSection, { type DiscountData } from "@/components/order/CouponPointSection";
 import { COUPON_POINT_ENABLED } from "@/lib/feature-flags";
+import { formatKoreanPhone } from "@/lib/format-phone";
+import PickupDateTimePicker from "@/components/form/PickupDateTimePicker";
 
 interface CreatedOrder {
   orderNumber: string;
@@ -316,9 +318,11 @@ export default function CartCheckoutPage() {
             <input
               type="tel"
               value={customerPhone}
-              onChange={(e) => setCustomerPhone(e.target.value)}
+              onChange={(e) => setCustomerPhone(formatKoreanPhone(e.target.value))}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage-400/50"
               placeholder="010-1234-5678"
+              inputMode="numeric"
+              maxLength={13}
             />
           </div>
 
@@ -405,12 +409,7 @@ export default function CartCheckoutPage() {
               <label className="block text-sm font-medium text-charcoal-300 mb-1">
                 픽업 날짜 · 시간 <span className="text-red-400">*</span>
               </label>
-              <input
-                type="datetime-local"
-                value={pickupDate}
-                onChange={(e) => setPickupDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage-400/50"
-              />
+              <PickupDateTimePicker value={pickupDate} onChange={setPickupDate} />
               <p className="text-xs text-charcoal-100 mt-1">최소 2일 전 주문 부탁드립니다.</p>
             </div>
           )}

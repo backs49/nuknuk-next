@@ -5,6 +5,8 @@ import { MenuItem, CategoryInfo, formatPrice } from "@/data/menu";
 import CouponPointSection, { type DiscountData } from "./CouponPointSection";
 import { COUPON_POINT_ENABLED } from "@/lib/feature-flags";
 import { calculateOptionPrice, type SelectedOption } from "@/lib/option-utils";
+import { formatKoreanPhone } from "@/lib/format-phone";
+import PickupDateTimePicker from "@/components/form/PickupDateTimePicker";
 
 export interface OrderFormData {
   quantity: number;
@@ -216,9 +218,11 @@ export default function OrderForm({ menuItem, category, selectedOptions, onSubmi
           <input
             type="tel"
             value={form.customerPhone}
-            onChange={(e) => update("customerPhone", e.target.value)}
+            onChange={(e) => update("customerPhone", formatKoreanPhone(e.target.value))}
             className="input"
             placeholder="010-0000-0000"
+            inputMode="numeric"
+            maxLength={13}
             required
           />
         </Field>
@@ -298,12 +302,9 @@ export default function OrderForm({ menuItem, category, selectedOptions, onSubmi
 
         {form.deliveryMethod === "pickup" && (
           <Field label="픽업 날짜 · 시간" required>
-            <input
-              type="datetime-local"
+            <PickupDateTimePicker
               value={form.pickupDate}
-              onChange={(e) => update("pickupDate", e.target.value)}
-              className="input"
-              required
+              onChange={(v) => update("pickupDate", v)}
             />
           </Field>
         )}
