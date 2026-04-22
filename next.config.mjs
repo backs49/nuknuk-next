@@ -16,7 +16,7 @@ const ContentSecurityPolicy = [
   "frame-src 'self' https://*.tosspayments.com https://www.google.com https://sharer.kakao.com https://www.instagram.com",
   "object-src 'none'",
   "base-uri 'self'",
-  "form-action 'self'",
+  "form-action 'self' https://*.tosspayments.com",
   "frame-ancestors 'none'",
   "upgrade-insecure-requests",
 ].join("; ");
