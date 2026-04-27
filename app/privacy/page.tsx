@@ -13,7 +13,7 @@ const BUSINESS = {
   companyName: "넉넉할유",
   ceoName: "도유리",
   bizRegNo: "114-28-64011",
-  mailOrderNo: "확인 중 (신고 후 업데이트 예정)",
+  mailOrderNo: "2026-경북영천-0070",
   address: "경상북도 영천시 서문길 90, A동(성내동)",
   phone: "0507-1328-3934",
   privacyOfficerName: "도유리 (대표)",

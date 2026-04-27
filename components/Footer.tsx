@@ -77,6 +77,8 @@ export default function Footer() {
             </p>
             <p>
               <span className="text-white/50">사업자등록번호</span> 114-28-64011
+              <span className="mx-2 text-white/20">|</span>
+              <span className="text-white/50">통신판매업신고번호</span> 2026-경북영천-0070
             </p>
             <p>
               <span className="text-white/50">사업장 소재지</span> 경상북도 영천시 서문길 90, A동(성내동)
