@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { getAllSettings, updateSetting } from '@/lib/settings-db'
 
 export const dynamic = 'force-dynamic'
 
 // GET /api/admin/settings — 전체 설정 조회
 export async function GET() {
+  const session = await getServerSession(authOptions)
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const settings = await getAllSettings()
     return NextResponse.json({ settings })
@@ -16,6 +23,11 @@ export async function GET() {
 
 // PUT /api/admin/settings — 설정 업데이트
 export async function PUT(request: NextRequest) {
+  const session = await getServerSession(authOptions)
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const body = await request.json()
     const { key, value } = body

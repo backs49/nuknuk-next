@@ -1,8 +1,10 @@
 // app/api/reviews/upload/route.ts
 import { NextRequest, NextResponse } from 'next/server'
+import { randomUUID } from 'crypto'
 import { REVIEW_ENABLED } from '@/lib/feature-flags'
 import { getServiceSupabase } from '@/lib/supabase'
 import { getSupabaseOrThrow } from '@/lib/db-utils'
+import { reviewUploadLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
 
 // 허용 MIME 타입
 const ALLOWED_MIME: Record<string, string> = {
@@ -15,6 +17,9 @@ export async function POST(req: NextRequest) {
   if (!REVIEW_ENABLED) {
     return NextResponse.json({ error: '리뷰 기능이 비활성화되어 있습니다' }, { status: 403 })
   }
+
+  const { success, reset } = await reviewUploadLimit.limit(getClientIp(req))
+  if (!success) return rateLimitResponse(reset)
 
   const supabase = getServiceSupabase()
   if (!supabase) {
@@ -60,7 +65,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '지원하지 않는 파일 형식입니다 (jpg, png, webp만 가능)' }, { status: 400 })
   }
 
-  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+  const fileName = `${randomUUID()}.${ext}`
   const buffer = Buffer.from(await file.arrayBuffer())
 
   const { error } = await supabase.storage

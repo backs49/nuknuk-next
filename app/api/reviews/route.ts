@@ -7,6 +7,7 @@ import { getSettingNumber } from '@/lib/settings-db'
 import { addPoints } from '@/lib/point-db'
 import { getSupabaseOrThrow } from '@/lib/db-utils'
 import { apiError } from '@/lib/api-error'
+import { reviewCreateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit'
 
 // GET: 상품별 리뷰 목록 (더보기용)
 export async function GET(req: NextRequest) {
@@ -32,6 +33,9 @@ export async function POST(req: NextRequest) {
   if (!REVIEW_ENABLED) {
     return NextResponse.json({ error: '리뷰 기능이 비활성화되어 있습니다' }, { status: 403 })
   }
+
+  const { success, reset } = await reviewCreateLimit.limit(getClientIp(req))
+  if (!success) return rateLimitResponse(reset)
 
   const { orderId, menuItemId, phone, rating, content, imageUrls } = await req.json()
 

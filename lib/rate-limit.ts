@@ -50,6 +50,12 @@ export const couponValidateLimit = createLimiter(10, "1 m", "rl:coupon-validate"
 // 주문 생성 POST: 동일 IP에서 주문 남용 방지.
 export const orderCreateLimit = createLimiter(10, "1 m", "rl:order-create");
 
+// 리뷰 작성: 동일 IP 스팸 방지. 10회/시간이면 정상 사용은 막지 않음.
+export const reviewCreateLimit = createLimiter(10, "1 h", "rl:review-create");
+
+// 리뷰 이미지 업로드: 첨부 1리뷰 최대 3장 × 정상 사용 고려, 20회/시간.
+export const reviewUploadLimit = createLimiter(20, "1 h", "rl:review-upload");
+
 // Vercel / 프록시 뒤에서 클라이언트 IP 추출.
 export function getClientIp(request: Request): string {
   const fwd = request.headers.get("x-forwarded-for");
